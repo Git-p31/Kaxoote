@@ -10,11 +10,15 @@
 body{overscroll-behavior:none}
 .screen{padding:16px;min-height:100dvh}
 .joinbox{width:min(380px,100%);display:grid;gap:12px}
-.avatars{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
-.avatars button{font-size:26px;background:#f1f0f6;padding:6px 0;border-radius:10px;border:3px solid transparent}
-.avatars button.sel{border-color:#864cbf;background:#efe4ff}
+.av{width:100%;height:100%;display:block;filter:drop-shadow(0 3px 4px rgba(0,0,0,.25))}
+.avw{display:inline-grid;place-items:center}
+.avatars{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.avatars button{background:#f1f0f6;padding:6px;border-radius:14px;border:3px solid transparent;aspect-ratio:1;transition:transform .15s}
+.avatars button.sel{border-color:#864cbf;background:#efe4ff;transform:scale(1.06)}
+.meav{width:110px;height:110px;margin:0 auto 6px;animation:bounce .6s cubic-bezier(.2,1.8,.4,1)}
 .err{color:#e21b3c;font-weight:800;min-height:1.4em}
 .hdr{display:flex;justify-content:space-between;align-items:center;gap:10px;font-weight:800;margin-bottom:12px}
+.hdr .pill .ic{margin-right:4px}
 .hdr .me{background:rgba(0,0,0,.3);padding:6px 12px;border-radius:999px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .big{font-size:clamp(26px,7vw,40px);font-weight:900;margin:0}
 .qtext{background:#fff;color:#1d1d2b;border-radius:12px;padding:12px 14px;font-weight:800;font-size:18px;text-align:center;margin-bottom:12px}
@@ -40,16 +44,31 @@ body{overscroll-behavior:none}
 .result.ok{background:linear-gradient(160deg,#1f9e4c,#26890c)}
 .result.bad{background:linear-gradient(160deg,#c7173a,#8f0f29)}
 .result.neutral{background:transparent}
-.icon{width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.2);display:grid;place-items:center;font-size:70px;margin:18px auto;animation:bounce .6s cubic-bezier(.2,1.8,.4,1)}
+.icon{width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.2);display:grid;place-items:center;margin:18px auto;animation:bounce .6s cubic-bezier(.2,1.8,.4,1);box-shadow:inset 0 -6px 0 rgba(0,0,0,.15)}
+.icon .ic{width:70px;height:70px;stroke-width:3}
 @keyframes bounce{from{transform:scale(0)}}
+.pts .ic{color:#ffc21a;margin-right:6px}
 .pts{display:inline-block;background:rgba(0,0,0,.3);padding:10px 22px;border-radius:12px;font-size:30px;font-weight:900;margin:8px 0}
+.streak .ic{margin-right:4px}
 .streak{display:inline-block;background:#ff6a00;padding:6px 14px;border-radius:999px;font-weight:900;animation:bounce .5s}
 .rankline{font-size:20px;font-weight:800;margin-top:14px}
 .explain{background:#fff;color:#1d1d2b;border-radius:12px;padding:12px 14px;margin-top:16px;text-align:left;font-size:16px}
 .spinner{width:64px;height:64px;border:8px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:spin 1s linear infinite;margin:20px auto}
 @keyframes spin{to{transform:rotate(360deg)}}
 .place{font-size:clamp(56px,18vw,96px);font-weight:900;line-height:1;margin:10px 0}
-.footer{position:fixed;bottom:0;left:0;right:0;background:#fff;color:#1d1d2b;display:flex;justify-content:space-between;padding:10px 16px;font-weight:800;z-index:5}
+.footer{position:fixed;bottom:0;left:0;right:0;background:#fff;color:#1d1d2b;display:flex;justify-content:space-between;align-items:center;padding:6px 16px;font-weight:800;z-index:5}
+.footer span{display:inline-flex;align-items:center;gap:6px}
+.footer .avw{width:34px;height:34px}
+.footer .ic{color:#864cbf}
+/* эмоции */
+.rbar{position:fixed;left:8px;right:8px;bottom:58px;z-index:6;display:none;justify-content:center;gap:4px;background:rgba(0,0,0,.35);backdrop-filter:blur(8px);border-radius:18px;padding:6px}
+.rbar.on{display:flex}
+.rbar button{flex:1;max-width:52px;aspect-ratio:1;font-size:26px;background:rgba(255,255,255,.12);border-radius:12px;transition:transform .1s}
+.rbar button:active{transform:scale(.85)}
+.rbar button.cool{opacity:.5}
+.flyr{position:fixed;z-index:7;font-size:40px;pointer-events:none;animation:flyr 1s ease-out forwards}
+@keyframes flyr{to{transform:translateY(-160px) scale(1.4);opacity:0}}
+.screen{padding-bottom:130px}
 </style>
 </head>
 <body>
@@ -75,8 +94,8 @@ body{overscroll-behavior:none}
 </section>
 
 <section class="screen center" id="sWait">
-  <p class="big">Ты в игре!</p>
-  <p style="font-size:18px;opacity:.9">Найди своё имя на экране</p>
+  <div class="meav" id="meAv"></div><p class="big">Ты в игре!</p>
+  <p style="font-size:18px;opacity:.9">Найди своё имя на экране. Жми эмоции внизу — они появятся у всех на экране!</p>
   <div class="spinner"></div>
   <p id="waitTitle" style="font-weight:800"></p>
 </section>
@@ -109,11 +128,12 @@ body{overscroll-behavior:none}
   <a href="play.html" class="btn" style="text-decoration:none;margin-top:20px">Новая игра</a>
 </section>
 
+<div class="rbar" id="rbar"></div>
 <div class="footer" id="footer" style="display:none"><span id="fName"></span><span id="fScore">0</span></div>
 
 <script src="lib/mqtt.min.js"></script>
-<script src="net.js?v=3"></script>
-<script src="fx.js"></script>
-<script src="play.js?v=3"></script>
+<script src="net.js?v=4"></script>
+<script src="fx.js?v=4"></script>
+<script src="play.js?v=4"></script>
 </body>
 </html>

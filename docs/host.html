@@ -6,114 +6,161 @@
 <title>Kaxoote — ведущий</title>
 <link rel="stylesheet" href="style.css">
 <style>
+.av{width:100%;height:100%;display:block;filter:drop-shadow(0 4px 6px rgba(0,0,0,.25))}
+.av-emoji{font-size:1em;line-height:1}
 .ctrl{position:fixed;right:14px;bottom:14px;z-index:50;display:flex;gap:8px}
-.ctrl button{width:48px;height:48px;border-radius:50%;background:rgba(0,0,0,.35);color:#fff;font-weight:900}
+.ctrl button{width:48px;height:48px;border-radius:50%;background:rgba(0,0,0,.35);color:#fff;font-size:20px;display:grid;place-items:center;backdrop-filter:blur(6px)}
+.ctrl button.off{opacity:.45}
+.ctrl .ic{margin:0}
 /* выбор викторины */
 .qlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;max-width:1200px;width:100%;margin:24px auto}
 .qcard{background:#fff;color:#1d1d2b;border-radius:16px;overflow:hidden;text-align:left;box-shadow:0 6px 0 rgba(0,0,0,.25);display:flex;flex-direction:column}
-.qcard .cov{height:130px;background:linear-gradient(135deg,#864cbf,#1368ce);background-size:cover;background-position:center}
+.qcard .cov{height:130px;background:linear-gradient(135deg,#864cbf,#1368ce);background-size:cover;background-position:center;display:flex;align-items:flex-end;padding:10px}
+.qcard .cov .tag{background:rgba(0,0,0,.45);color:#fff;border-radius:999px;padding:4px 10px;font-weight:800;font-size:13px}
 .qcard .bd{padding:14px 16px;flex:1;display:flex;flex-direction:column;gap:6px}
 .qcard h3{margin:0;font-size:19px}
 .qcard p{margin:0;color:#6b6b80;font-size:14px;flex:1}
 /* лобби */
 .pinbar{display:flex;gap:18px;align-items:stretch;justify-content:center;flex-wrap:wrap;margin-top:8px}
-.pinbox{background:#fff;color:#1d1d2b;border-radius:14px;padding:14px 26px;text-align:left}
-.pinbox small{display:block;font-weight:700;color:#6b6b80}
+.pinbox{background:#fff;color:#1d1d2b;border-radius:16px;padding:14px 26px;text-align:left;box-shadow:0 8px 0 rgba(0,0,0,.22)}
+.pinbox small{display:flex;align-items:center;gap:6px;font-weight:800;color:#6b6b80;text-transform:none}
+.pinbox small .ic{color:#864cbf}
 .pinbox .pin{font-size:clamp(48px,8vw,92px);font-weight:900;letter-spacing:.06em;line-height:1}
-.pinbox .url{font-size:20px;font-weight:800;word-break:break-all}
-.qr{background:#fff;border-radius:14px;padding:8px;display:flex}
-.qr img{width:170px;height:170px}
+.pinbox .url{font-size:20px;font-weight:800;word-break:break-all;margin-top:4px}
+.qr{background:#fff;border-radius:16px;padding:8px;display:flex;box-shadow:0 8px 0 rgba(0,0,0,.22)}
+.qr img{width:170px;height:170px;image-rendering:pixelated}
 .lobbyrow{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:22px auto 12px;width:100%;max-width:1200px;flex-wrap:wrap}
-.players{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;max-width:1200px;margin:0 auto}
-.pl{background:rgba(0,0,0,.3);padding:10px 16px;border-radius:12px;font-weight:800;font-size:20px;animation:popin .45s cubic-bezier(.2,1.6,.4,1);cursor:pointer}
-.pl:hover{text-decoration:line-through}
+.lobbyrow .acts{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.sel{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.14);border-radius:10px;padding:0 10px;min-height:48px;font-weight:800}
+.sel select{background:transparent;color:#fff;border:0;font-weight:800;font-size:15px;padding:10px 4px}
+.sel select option{color:#1d1d2b}
+.players{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;max-width:1200px;margin:0 auto}
+.pl{display:flex;align-items:center;gap:10px;background:rgba(0,0,0,.3);padding:6px 16px 6px 6px;border-radius:999px;font-weight:800;font-size:20px;animation:popin .5s cubic-bezier(.2,1.6,.4,1);cursor:pointer;border:2px solid rgba(255,255,255,.12)}
+.pl .avw{width:44px;height:44px;display:grid;place-items:center;font-size:32px}
+.pl:hover{border-color:#ff3b5c}
+.pl:hover::after{content:'убрать';font-size:12px;color:#ff8aa0}
+.pl.bot{border-style:dashed}
 @keyframes popin{from{transform:scale(0) rotate(-12deg)}to{transform:none}}
-.waiting{opacity:.8;font-size:22px;font-weight:700;margin-top:30px;animation:pulse 1.6s infinite}
+.waiting{opacity:.85;font-size:22px;font-weight:700;margin-top:30px;animation:pulse 1.6s infinite;display:flex;flex-direction:column;align-items:center;gap:8px}
+.waiting .ic{width:46px;height:46px}
 @keyframes pulse{50%{opacity:.4}}
 /* вступление */
-.intro h1{font-size:clamp(30px,5vw,60px);max-width:1100px;margin:16px auto;line-height:1.1;background:#fff;color:#1d1d2b;padding:24px 30px;border-radius:14px;animation:zoom .5s cubic-bezier(.2,1.4,.4,1)}
+.intro h1{font-size:clamp(30px,5vw,60px);max-width:1100px;margin:16px auto;line-height:1.1;background:#fff;color:#1d1d2b;padding:24px 30px;border-radius:16px;animation:zoom .5s cubic-bezier(.2,1.4,.4,1);box-shadow:0 10px 0 rgba(0,0,0,.2)}
 @keyframes zoom{from{transform:scale(.6);opacity:0}}
-.typetag{display:inline-block;background:#ffc21a;color:#2b0f5e;font-weight:900;padding:6px 14px;border-radius:999px}
+.typetag{display:inline-flex;align-items:center;background:#ffc21a;color:#2b0f5e;font-weight:900;padding:6px 14px;border-radius:999px}
+.bigicon{width:96px;height:96px;border-radius:28px;background:#ffc21a;color:#2b0f5e;display:grid;place-items:center;margin:0 auto 8px;box-shadow:0 8px 0 rgba(0,0,0,.25);animation:zoom .5s cubic-bezier(.2,1.6,.4,1)}
+.bigicon .ic{width:56px;height:56px;margin:0}
 .progress{width:min(700px,80vw);height:12px;background:rgba(255,255,255,.2);border-radius:99px;overflow:hidden;margin:18px auto 0}
 .progress i{display:block;height:100%;background:#ffc21a;width:0}
 .progress i.run{animation:fill 4s linear forwards}
 @keyframes fill{to{width:100%}}
 /* вопрос */
-.qtitle{background:#fff;color:#1d1d2b;border-radius:12px;padding:16px 24px;font-size:clamp(22px,3vw,38px);font-weight:800;text-align:center;line-height:1.15}
+.qtitle{background:#fff;color:#1d1d2b;border-radius:14px;padding:16px 24px;font-size:clamp(22px,3vw,38px);font-weight:800;text-align:center;line-height:1.15;box-shadow:0 6px 0 rgba(0,0,0,.18)}
 .qmid.slide{display:none}
 .qmid{flex:1;display:grid;grid-template-columns:150px minmax(0,1fr) 150px;align-items:center;gap:16px;margin:16px 0;min-height:240px}
 .timer{width:130px;height:130px;position:relative}
 .timer svg{width:100%;height:100%;transform:rotate(-90deg)}
 .timer .n{position:absolute;inset:0;display:grid;place-items:center;font-size:46px;font-weight:900}
+.timer .n .ic{position:absolute;top:18px;width:18px;height:18px;opacity:.7}
 .timer.urgent .n{color:#ffc21a;animation:beat .5s infinite}
 @keyframes beat{50%{transform:scale(1.15)}}
 .media{display:flex;justify-content:center;align-items:center;height:100%;min-height:220px}
-.media img{max-width:100%;max-height:46vh;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.35);animation:zoom .5s}
-.media .hint{font-size:28px;font-weight:800;opacity:.9;text-align:center}
-.counter{text-align:center}
-.counter b{display:block;font-size:56px;line-height:1}
+.media img{max-width:100%;max-height:46vh;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.35);animation:zoom .5s}
+.media .hint{font-size:28px;font-weight:800;opacity:.95;text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px}
+.media .hint .ic{width:84px;height:84px;padding:16px;background:rgba(255,255,255,.14);border-radius:24px}
+.counter{text-align:center;background:rgba(0,0,0,.25);border-radius:18px;padding:14px 8px}
+.counter .ic{width:28px;height:28px;opacity:.85}
+.counter b{display:block;font-size:52px;line-height:1;transition:transform .2s}
+.counter b.bump{transform:scale(1.25)}
+.counter small{display:block;font-weight:700;opacity:.85}
 .opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.opt{display:flex;align-items:center;gap:14px;color:#fff;border-radius:10px;padding:16px 18px;min-height:86px;font-size:clamp(18px,2.2vw,28px);font-weight:800;box-shadow:0 5px 0 rgba(0,0,0,.25);position:relative;overflow:hidden;transition:opacity .3s,transform .3s}
-.opt .shape{width:42px;height:42px;flex:none}
+.opt{display:flex;align-items:center;gap:14px;color:#fff;border-radius:12px;padding:16px 18px;min-height:86px;font-size:clamp(18px,2.2vw,28px);font-weight:800;box-shadow:0 6px 0 rgba(0,0,0,.25),inset 0 2px 0 rgba(255,255,255,.25);position:relative;overflow:hidden;transition:opacity .3s,transform .3s}
+.opt .shape{width:42px;height:42px;flex:none;filter:drop-shadow(0 2px 0 rgba(0,0,0,.2))}
 .opt .txt{flex:1}
-.opt .cnt{font-size:28px;font-weight:900;display:none}
+.opt .cnt{font-size:26px;font-weight:900;display:none;align-items:center;gap:6px;background:rgba(0,0,0,.22);border-radius:999px;padding:2px 12px}
 .opt .bar{position:absolute;left:0;bottom:0;height:8px;background:rgba(255,255,255,.7);width:0;transition:width 1s ease}
-.reveal .opt .cnt{display:block}
+.reveal .opt .cnt{display:inline-flex}
 .reveal .opt.no{opacity:.28;transform:scale(.97)}
-.reveal .opt.yes{transform:scale(1.02)}
-.reveal .opt.yes{outline:4px solid #fff;outline-offset:-4px}
+.reveal .opt.yes{transform:scale(1.02);outline:4px solid #fff;outline-offset:-4px}
 .orderlist{display:grid;gap:10px;max-width:900px;margin:0 auto;width:100%}
-.orderlist div{display:flex;gap:14px;align-items:center;background:rgba(0,0,0,.3);padding:14px 18px;border-radius:10px;font-size:24px;font-weight:800}
+.orderlist div{display:flex;gap:14px;align-items:center;background:rgba(0,0,0,.3);padding:14px 18px;border-radius:12px;font-size:24px;font-weight:800}
 .orderlist div.a3{background:var(--green)}
 .orderlist div b{background:#fff;color:#2b0f5e;border-radius:8px;width:40px;height:40px;display:grid;place-items:center;flex:none}
+@keyframes slidein{from{transform:translateX(-60px);opacity:0}}
 .sliderview{max-width:900px;margin:0 auto;width:100%;text-align:center}
 .scale{position:relative;height:16px;background:rgba(255,255,255,.25);border-radius:99px;margin:40px 0 12px}
 .scale .mark{position:absolute;top:-8px;width:4px;height:32px;background:#fff;border-radius:2px}
-.scale .ans{position:absolute;top:-30px;transform:translateX(-50%);background:#2bd96b;color:#06301a;font-weight:900;padding:6px 12px;border-radius:8px;white-space:nowrap}
+.scale .ans{position:absolute;top:-34px;transform:translateX(-50%);background:#2bd96b;color:#06301a;font-weight:900;padding:6px 12px;border-radius:8px;white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
 .scale .tol{position:absolute;top:0;height:100%;background:rgba(43,217,107,.55);border-radius:99px}
 .scale .dot{position:absolute;top:2px;width:12px;height:12px;border-radius:50%;background:#ffc21a;transform:translateX(-50%)}
 .scaleLbl{display:flex;justify-content:space-between;font-weight:800;font-size:20px}
 .typed{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
-.typed span{background:rgba(0,0,0,.3);padding:12px 18px;border-radius:10px;font-size:24px;font-weight:800}
+.typed span{background:rgba(0,0,0,.3);padding:12px 18px;border-radius:10px;font-size:24px;font-weight:800;display:inline-flex;align-items:center;gap:8px}
 .typed span.ok{background:var(--green)}
-.explain{background:#fff;color:#1d1d2b;border-radius:14px;padding:16px 22px;margin:14px auto 0;max-width:1000px;font-size:20px;animation:zoom .5s;display:flex;gap:14px;align-items:flex-start}
+.explain{background:#fff;color:#1d1d2b;border-radius:14px;padding:16px 22px;margin:14px auto 0;max-width:1000px;font-size:20px;animation:zoom .5s;display:flex;gap:14px;align-items:flex-start;box-shadow:0 6px 0 rgba(0,0,0,.18)}
+.explain .ic{color:#864cbf;width:28px;height:28px}
 .explain b{color:#864cbf;white-space:nowrap;flex:none}
 .slidebody{background:#fff;color:#1d1d2b;border-radius:14px;padding:26px 30px;max-width:1000px;margin:24px auto 0;font-size:24px;white-space:pre-wrap}
-.stats{text-align:center;font-weight:800;font-size:20px;opacity:.9;margin-top:6px}
+.stats{display:flex;justify-content:center;gap:18px;font-weight:800;font-size:20px;opacity:.95;margin-top:8px;flex-wrap:wrap}
+.stats span{display:inline-flex;align-items:center;gap:6px}
+/* кнопка с полосой автоперехода */
+.btn.autoing{position:relative;overflow:hidden}
+.btn .autobar{position:absolute;left:0;bottom:0;height:5px;background:#2b0f5e;opacity:.45;width:0}
+.btn.ghost .autobar{background:#ffc21a;opacity:.9}
+@keyframes autofill{to{width:100%}}
 /* таблица лидеров */
 .lb{max-width:900px;width:100%;margin:24px auto;display:grid;gap:12px}
-.lbrow{display:flex;align-items:center;gap:16px;background:#fff;color:#1d1d2b;border-radius:12px;padding:14px 20px;font-size:26px;font-weight:900;animation:slidein .5s both}
+.lbrow{display:flex;align-items:center;gap:14px;background:#fff;color:#1d1d2b;border-radius:14px;padding:10px 20px 10px 14px;font-size:26px;font-weight:900;animation:slidein .5s both;box-shadow:0 6px 0 rgba(0,0,0,.2)}
 .lbrow:first-child{background:#ffc21a}
-.lbrow .rk{width:40px}
-.lbrow .nm{flex:1;text-align:left}
-.lbrow .up{font-size:16px;color:#26890c}
-.lbrow .fl{font-size:16px;background:#ff6a00;color:#fff;border-radius:99px;padding:2px 10px}
-@keyframes slidein{from{transform:translateX(-60px);opacity:0}}
+.lbrow .rk{width:40px;text-align:center}
+.lbrow .avw{width:54px;height:54px;font-size:38px;display:grid;place-items:center}
+.lbrow .nm{flex:1;text-align:left;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.lbrow .up{font-size:16px;color:#26890c;display:inline-flex;align-items:center}
+.lbrow .fl{font-size:15px;background:#ff6a00;color:#fff;border-radius:99px;padding:3px 10px;display:inline-flex;align-items:center;gap:4px}
+.lbrow .sc{display:inline-flex;align-items:center;gap:6px}
+.lbrow .sc .ic{color:#864cbf}
+.lbrow:first-child .sc .ic{color:#2b0f5e}
 /* подиум */
 .pod{display:flex;align-items:flex-end;justify-content:center;gap:16px;margin-top:30px;min-height:52vh}
-.col{width:min(240px,28vw);display:flex;flex-direction:column;align-items:center;gap:10px;opacity:0}
+.col{width:min(240px,28vw);display:flex;flex-direction:column;align-items:center;gap:8px;opacity:0}
 .col.show{opacity:1;animation:rise .9s cubic-bezier(.2,1.2,.4,1)}
 @keyframes rise{from{transform:translateY(80px);opacity:0}}
 .col .who{font-size:clamp(20px,2.6vw,32px);font-weight:900;text-align:center}
-.col .av{font-size:56px}
-.col .blk{width:100%;border-radius:12px 12px 0 0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:16px;font-weight:900;box-shadow:inset 0 -10px 0 rgba(0,0,0,.2)}
-.col .blk .pl1{font-size:60px;line-height:1}
-.c1 .blk{height:42vh;background:#ffc21a;color:#2b0f5e}
-.c2 .blk{height:30vh;background:#d9dde6;color:#2b0f5e}
-.c3 .blk{height:22vh;background:#e09a5b;color:#2b0f5e}
+.col .avw{width:clamp(80px,9vw,120px);height:clamp(80px,9vw,120px);font-size:64px;display:grid;place-items:center;animation:hop 1.2s ease-in-out infinite}
+.c1 .avw{width:clamp(100px,11vw,150px);height:clamp(100px,11vw,150px)}
+@keyframes hop{50%{transform:translateY(-8px)}}
+.col .blk{width:100%;border-radius:14px 14px 0 0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:16px;font-weight:900;box-shadow:inset 0 -10px 0 rgba(0,0,0,.2),inset 0 3px 0 rgba(255,255,255,.4);gap:4px}
+.col .blk .ic{width:44px;height:44px}
+.col .blk .pl1{font-size:54px;line-height:1}
+.c1 .blk{height:42vh;background:linear-gradient(#ffd54a,#e9a800);color:#2b0f5e}
+.c2 .blk{height:30vh;background:linear-gradient(#eef0f5,#b9c0cf);color:#2b0f5e}
+.c3 .blk{height:22vh;background:linear-gradient(#f0b27a,#c9773a);color:#2b0f5e}
 .rest{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:18px}
-.rest span{background:rgba(0,0,0,.3);padding:8px 14px;border-radius:10px;font-weight:700}
+.rest span{background:rgba(0,0,0,.3);padding:6px 14px 6px 6px;border-radius:999px;font-weight:700;display:inline-flex;align-items:center;gap:8px}
+.rest .avw{width:32px;height:32px;font-size:22px;display:grid;place-items:center}
 .bottombar{display:flex;justify-content:flex-end;gap:10px;margin-top:14px}
-@media(max-width:800px){.qmid{grid-template-columns:1fr;}.timer{margin:0 auto}.opts{grid-template-columns:1fr}}
+/* эмоции */
+#reacts{position:fixed;inset:0;pointer-events:none;z-index:60;overflow:hidden}
+.rx{position:absolute;bottom:-90px;display:flex;flex-direction:column;align-items:center;animation:rxup 3.4s cubic-bezier(.3,.6,.4,1) forwards}
+.rx .e{font-size:clamp(44px,5vw,70px);line-height:1;filter:drop-shadow(0 6px 8px rgba(0,0,0,.3));animation:wob .9s ease-in-out infinite}
+.rx .n{display:flex;align-items:center;gap:4px;background:rgba(0,0,0,.45);color:#fff;font-weight:800;font-size:14px;border-radius:999px;padding:2px 10px 2px 3px;margin-top:4px;white-space:nowrap}
+.rx .n .avw{width:22px;height:22px;font-size:16px;display:grid;place-items:center}
+@keyframes rxup{0%{transform:translateY(0) scale(.6);opacity:0}10%{opacity:1;transform:translateY(-12vh) scale(1.1)}80%{opacity:1}100%{transform:translateY(-95vh) scale(.9);opacity:0}}
+@keyframes wob{50%{transform:rotate(10deg) scale(1.08)}}
+.rxbar{position:fixed;left:14px;bottom:14px;z-index:50;display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.3);border-radius:999px;padding:6px 12px;font-weight:800;font-size:14px}
+@media(max-width:800px){.qmid{grid-template-columns:1fr}.timer{margin:0 auto}.opts{grid-template-columns:1fr}}
+@media (prefers-reduced-motion: reduce){.rx{animation:none;bottom:20vh}}
 </style>
 </head>
 <body>
 <div class="bgshapes" id="bg"></div>
-<div class="ctrl"><button id="mute" title="Звук">🔊</button><button id="music" title="Музыка">♪</button><button id="full" title="Во весь экран">⛶</button></div>
+<div id="reacts"></div>
+<div class="ctrl"><button id="mute" title="Звук"></button><button id="music" title="Музыка"></button><button id="full" title="Во весь экран"></button></div>
+<div class="rxbar" id="rxbar" style="display:none" title="Эмоции от игроков"></div>
 
 <!-- выбор викторины -->
 <section class="screen on" id="sPick">
-  <div class="topbar"><a href="./" class="logo" style="color:#fff;text-decoration:none"><b>Ka</b>xoote</a><a class="btn ghost" href="editor.html" style="text-decoration:none">Редактор</a></div>
+  <div class="topbar"><a href="./" class="logo" style="color:#fff;text-decoration:none"><b>Ka</b>xoote</a><a class="btn ghost ib" href="editor.html" style="text-decoration:none" data-ic="edit">Редактор</a></div>
   <h1 style="text-align:center;font-size:clamp(28px,4vw,46px);margin:26px 0 0">Какую викторину проводим?</h1>
   <div class="qlist" id="qlist"></div>
 </section>
@@ -121,22 +168,28 @@
 <!-- лобби -->
 <section class="screen" id="sLobby">
   <div class="pinbar">
-    <div class="pinbox"><small>Заходи на</small><div class="url" id="joinUrl"></div></div>
-    <div class="pinbox"><small>PIN игры</small><div class="pin" id="pin"></div></div>
+    <div class="pinbox"><small data-ic="link">Заходи на</small><div class="url" id="joinUrl"></div></div>
+    <div class="pinbox"><small data-ic="hash">PIN игры</small><div class="pin" id="pin"></div></div>
     <div class="qr"><img id="qr" alt="QR-код для входа"></div>
   </div>
   <div class="lobbyrow">
-    <div class="pill" id="pcount">0 игроков</div>
+    <div class="pill ib" data-ic="users" id="pcount">0 игроков</div>
     <div class="logo" id="lobbyTitle" style="font-size:22px"></div>
-    <div style="display:flex;gap:10px"><button class="btn ghost" id="lockBtn">Закрыть вход</button><button class="btn primary" id="startBtn">Начать ▶</button></div>
+    <div class="acts">
+      <label class="sel" title="Через сколько секунд после показа ответа игра сама пойдёт дальше"><span data-ic="auto"></span><select id="autoSel"><option value="0">Автопереход: выкл</option><option value="10">Авто: 10 с</option><option value="15" selected>Авто: 15 с</option><option value="20">Авто: 20 с</option><option value="30">Авто: 30 с</option></select></label>
+      <button class="btn ghost ib" id="botsBtn" data-ic="bot">+4 бота</button>
+      <button class="btn ghost ib" id="lockBtn" data-ic="unlock">Закрыть вход</button>
+      <button class="btn primary ib" id="startBtn" data-ic="play">Начать</button>
+    </div>
   </div>
   <div class="players" id="players"></div>
-  <div class="waiting center" id="waiting">Ждём игроков…</div>
+  <div class="waiting center" id="waiting"><span data-ic="users"></span>Ждём игроков…</div>
 </section>
 
 <!-- вступление вопроса -->
 <section class="screen center intro" id="sIntro">
-  <div class="pill" id="iNum"></div>
+  <div class="bigicon" id="iIcon"></div>
+  <div class="pill ib" data-ic="list" id="iNum"></div>
   <h1 id="iText"></h1>
   <span class="typetag" id="iType"></span>
   <div class="progress"><i id="iBar"></i></div>
@@ -144,12 +197,12 @@
 
 <!-- вопрос / ответ -->
 <section class="screen" id="sQ">
-  <div class="topbar" style="margin-bottom:12px"><div class="pill" id="qNum"></div><span class="typetag" id="qType"></span><button class="btn ghost" id="skipBtn">Дальше ⏭</button></div>
+  <div class="topbar" style="margin-bottom:12px"><div class="pill ib" id="qNum"></div><span class="typetag" id="qType"></span><button class="btn ghost ib" id="skipBtn"></button></div>
   <div class="qtitle" id="qText"></div>
   <div class="qmid">
-    <div class="timer" id="timer"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" stroke="rgba(255,255,255,.2)" stroke-width="12" fill="#46178f"/><circle id="tArc" cx="60" cy="60" r="52" stroke="#ffc21a" stroke-width="12" fill="none" stroke-linecap="round" stroke-dasharray="327" stroke-dashoffset="0"/></svg><div class="n" id="tNum">20</div></div>
+    <div class="timer" id="timer"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" stroke="rgba(255,255,255,.2)" stroke-width="12" fill="#46178f"/><circle id="tArc" cx="60" cy="60" r="52" stroke="#ffc21a" stroke-width="12" fill="none" stroke-linecap="round" stroke-dasharray="327" stroke-dashoffset="0"/></svg><div class="n"><span data-ic="clock"></span><span id="tNum">20</span></div></div>
     <div class="media" id="media"></div>
-    <div class="counter" id="counter"><b id="aCount">0</b>ответов</div>
+    <div class="counter" id="counter"><span data-ic="users"></span><b id="aCount">0</b><small>ответов</small></div>
   </div>
   <div id="answerArea"></div>
   <div id="explainBox"></div>
@@ -158,28 +211,29 @@
 
 <!-- лидеры -->
 <section class="screen" id="sLB">
-  <h1 style="text-align:center;font-size:clamp(30px,4vw,52px);margin:16px 0 0">Таблица лидеров</h1>
+  <h1 style="text-align:center;font-size:clamp(30px,4vw,52px);margin:16px 0 0" class="ib"><span data-ic="trophy"></span>Таблица лидеров</h1>
   <div class="lb" id="lb"></div>
-  <div class="bottombar"><button class="btn primary" id="lbNext">Дальше ▶</button></div>
+  <div class="bottombar"><button class="btn primary ib" id="lbNext"></button></div>
 </section>
 
 <!-- подиум -->
 <section class="screen center" id="sPod">
-  <h1 style="font-size:clamp(30px,4vw,52px);margin:10px 0 0" id="podTitle">Победители</h1>
+  <h1 style="font-size:clamp(30px,4vw,52px);margin:10px 0 0" class="ib" id="podTitle"><span data-ic="trophy"></span>Победители</h1>
   <div class="pod">
     <div class="col c2" id="c2"></div>
     <div class="col c1" id="c1"></div>
     <div class="col c3" id="c3"></div>
   </div>
   <div class="rest" id="rest"></div>
-  <div style="display:flex;gap:10px;margin-top:16px"><button class="btn" id="again">Сыграть ещё раз</button><a class="btn ghost" style="text-decoration:none" href="host.html">Другая викторина</a></div>
+  <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;justify-content:center"><button class="btn ib" id="again" data-ic="replay">Сыграть ещё раз</button><a class="btn ghost ib" style="text-decoration:none" href="host.html" data-ic="list">Другая викторина</a></div>
 </section>
 
 <script src="lib/mqtt.min.js"></script>
 <script src="lib/qrcode.js"></script>
-<script src="store.js"></script>
-<script src="net.js?v=3"></script>
-<script src="fx.js"></script>
-<script src="host.js?v=3"></script>
+<script src="fx.js?v=4"></script>
+<script src="store.js?v=4"></script>
+<script src="net.js?v=4"></script>
+<script src="bots.js?v=4"></script>
+<script src="host.js?v=4"></script>
 </body>
 </html>

@@ -1,6 +1,8 @@
 {
   const socket = PlayerSocket();
-  let pin = '', me = { name: '', avatar: AVATARS[(Math.random() * AVATARS.length) | 0], score: 0 };
+  let pin = '', me = { name: '', avatar: AVATAR_IDS[(Math.random() * AVATAR_IDS.length) | 0], score: 0 };
+  const savedAv = (() => { try { return localStorage.getItem('kx-av'); } catch { return null; } })();
+  if (savedAv && AVATAR_IDS.includes(savedAv)) me.avatar = savedAv;
   let timeInt = null, answered = false, curType = '';
 
   const bg = $('#bg');
@@ -12,6 +14,7 @@
   function show(id) {
     document.querySelectorAll('.screen').forEach((s) => s.classList.toggle('on', s.id === id));
     $('#footer').style.display = ['sPin', 'sName', 'sEnd'].includes(id) ? 'none' : 'flex';
+    $('#rbar').classList.toggle('on', ['sWait', 'sIntro', 'sSent', 'sRes'].includes(id));
   }
   const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
 
@@ -34,8 +37,20 @@
   };
 
   const av = $('#avatars');
-  av.innerHTML = AVATARS.map((a) => `<button type="button" class="${a === me.avatar ? 'sel' : ''}">${a}</button>`).join('');
-  av.querySelectorAll('button').forEach((b) => b.onclick = () => { me.avatar = b.textContent; av.querySelectorAll('button').forEach((x) => x.classList.toggle('sel', x === b)); FX.pop(); });
+  av.innerHTML = AVATAR_IDS.map((a) => `<button type="button" data-a="${a}" class="${a === me.avatar ? 'sel' : ''}" aria-label="Аватар">${avatarSVG(a)}</button>`).join('');
+  av.querySelectorAll('button').forEach((b) => b.onclick = () => { me.avatar = b.dataset.a; try { localStorage.setItem('kx-av', me.avatar); } catch {} av.querySelectorAll('button').forEach((x) => x.classList.toggle('sel', x === b)); FX.pop(); });
+
+  // панель эмоций
+  const rbar = $('#rbar'); let rcool = 0;
+  rbar.innerHTML = REACTIONS.map((e) => `<button type="button" aria-label="Эмоция ${e}">${e}</button>`).join('');
+  rbar.querySelectorAll('button').forEach((b) => b.onclick = () => {
+    const now = Date.now(); if (now - rcool < 550) return; rcool = now;
+    socket.emit('player:react', { e: b.textContent });
+    FX.pop(); FX.vibrate(15);
+    const r = b.getBoundingClientRect(); const f = document.createElement('div'); f.className = 'flyr'; f.textContent = b.textContent;
+    f.style.left = r.left + 'px'; f.style.top = (r.top - 10) + 'px'; document.body.appendChild(f); setTimeout(() => f.remove(), 1000);
+    rbar.querySelectorAll('button').forEach((x) => x.classList.add('cool')); setTimeout(() => rbar.querySelectorAll('button').forEach((x) => x.classList.remove('cool')), 550);
+  });
   const savedName = store.get('kx-name'); if (savedName) $('#nameIn').value = savedName;
 
   $('#nameForm').onsubmit = (e) => { e.preventDefault(); join($('#nameIn').value, me.avatar, null, false); };
@@ -52,7 +67,8 @@
       me.name = res.name; me.avatar = avatar; me.score = res.score || 0;
       store.set('kx-' + pin, JSON.stringify({ name: res.name, avatar, key: res.key }));
       store.set('kx-name', res.name);
-      $('#fName').textContent = avatar + ' ' + res.name; $('#fScore').textContent = me.score;
+      $('#fName').innerHTML = `<span class="avw">${avatarSVG(avatar)}</span>${esc(res.name)}`; setScore(me.score);
+      $('#meAv').innerHTML = avatarSVG(avatar);
       $('#waitTitle').textContent = res.title;
       FX.correct(); FX.vibrate(60);
       if (res.state === 'lobby') show('sWait'); else if (!$('#sAns').classList.contains('on')) show('sSent');
@@ -64,9 +80,10 @@
     if (saved && me.name) { const s = JSON.parse(saved); join(s.name, s.avatar, s.key, true); }
   });
 
+  function setScore(v) { $('#fScore').innerHTML = ic('star') + v; }
   socket.on('p:intro', (d) => {
-    $('#iNum').textContent = `Вопрос ${d.index + 1} из ${d.total}`;
-    $('#iType').textContent = TYPE_NAMES[d.type] || '';
+    $('#iNum').innerHTML = ic('list') + `Вопрос ${d.index + 1} из ${d.total}`;
+    $('#iType').innerHTML = ic(TYPE_ICONS[d.type] || 'grid') + ' ' + (TYPE_NAMES[d.type] || '');
     if (d.type !== 'slide') show('sIntro');
     FX.vibrate(40);
   });
@@ -74,11 +91,11 @@
   socket.on('p:start', ({ index, q }) => {
     answered = false; curType = q.type;
     if (q.type === 'slide') { show('sWait'); $('#waitTitle').textContent = 'Смотри на экран'; return; }
-    $('#aNum').textContent = `Вопрос ${index + 1}`;
+    $('#aNum').innerHTML = ic(TYPE_ICONS[q.type] || 'list') + `Вопрос ${index + 1}`;
     $('#aText').textContent = q.text;
     const end = Date.now() + q.time * 1000;
     clearInterval(timeInt);
-    const tick = () => { const s = Math.max(0, Math.ceil((end - Date.now()) / 1000)); $('#aTime').textContent = s + ' с'; if (!s) clearInterval(timeInt); };
+    const tick = () => { const s = Math.max(0, Math.ceil((end - Date.now()) / 1000)); $('#aTime').innerHTML = ic('clock') + s + ' с'; if (!s) clearInterval(timeInt); };
     tick(); timeInt = setInterval(tick, 250);
     renderInput(q);
     show('sAns');
@@ -146,21 +163,21 @@
 
   socket.on('p:result', (r) => {
     clearInterval(timeInt);
-    me.score = r.score; $('#fScore').textContent = r.score;
+    me.score = r.score; setScore(r.score);
     const box = $('#resBox');
     if (r.type === 'poll') {
       box.className = 'result neutral';
-      box.innerHTML = `<div class="icon">✓</div><p class="big">Голос учтён</p><div class="rankline">Ты на ${r.rank} месте</div>`;
+      box.innerHTML = `<div class="icon">${ic('poll')}</div><p class="big">Голос учтён</p><div class="rankline">Ты на ${r.rank} месте</div>`;
       show('sRes'); FX.pop(); return;
     }
     box.className = 'result ' + (r.correct ? 'ok' : 'bad');
     const title = r.correct ? ['Правильно!', 'В точку!', 'Отлично!', 'Супер!'][(Math.random() * 4) | 0] : (r.answered ? 'Неправильно' : 'Время вышло');
-    box.innerHTML = `<div class="icon">${r.correct ? '✔' : '✖'}</div><p class="big">${title}</p>
-      ${r.streak >= 2 ? `<div class="streak">Серия ответов: ${r.streak}</div><br>` : ''}
-      <div class="pts">+ ${r.points}</div>
-      <div class="rankline">Ты на ${r.rank} месте из ${r.total}</div>
+    box.innerHTML = `<div class="icon">${ic(r.correct ? 'check' : r.answered ? 'cross' : 'clock')}</div><p class="big">${title}</p>
+      ${r.streak >= 2 ? `<div class="streak">${ic('flame')}Серия ответов: ${r.streak}</div><br>` : ''}
+      <div class="pts">${ic('star')}+ ${r.points}</div>
+      <div class="rankline">${ic(r.rank === 1 ? 'trophy' : 'users')} Ты на ${r.rank} месте из ${r.total}</div>
       ${r.behind ? `<div style="opacity:.9;margin-top:4px">Отстаёшь от ${esc(r.behind.name)} на ${r.behind.by} очков</div>` : (r.rank === 1 ? '<div style="margin-top:4px">Ты лидер!</div>' : '')}
-      ${r.explain ? `<div class="explain"><b>А ты знал?</b> ${esc(r.explain)}</div>` : ''}`;
+      ${r.explain ? `<div class="explain">${ic('info')} <b>А ты знал?</b> ${esc(r.explain)}</div>` : ''}`;
     show('sRes');
     if (r.correct) { FX.correct(); FX.vibrate([40, 40, 40]); if (r.streak >= 3) { FX.streak(); FX.confetti(60); } }
     else { FX.wrong(); FX.vibrate(300); }

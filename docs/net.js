@@ -105,6 +105,7 @@ function HostSocket() {
       local('q:start', { index: game.qIndex, total: game.quiz.questions.length, q: publicQuestion(q, false) });
       sendAll('p:start', { index: game.qIndex, q: publicQuestion(q, true) });
       if (q.type !== 'slide') game.timer = setTimeout(reveal, (q.time || 20) * 1000 + 300);
+      else scheduleAuto(game.autoSec * 1000);
     }, q.type === 'slide' ? 0 : 4000);
   }
 
@@ -153,16 +154,26 @@ function HostSocket() {
       send(p, 'p:result', { type: q.type, correct: p.lastCorrect, answered: !!p.answer, points: p.lastPoints, score: p.score, streak: p.streak || 0,
         rank: p.rank, total: ranked.length, behind: above ? { name: above.name, by: above.score - p.score } : null, explain: q.explain || '' });
     }
+    scheduleAuto(game.autoSec * 1000);
+  }
+
+  // Автопереход: ведущему не нужно нажимать «Дальше»
+  function scheduleAuto(ms) {
+    clearTimeout(game.autoT);
+    if (!game.autoSec || !ms) { local('auto', { ms: 0 }); return; }
+    game.autoT = setTimeout(next, ms);
+    local('auto', { ms });
   }
 
   function leaderboard() {
     game.state = 'leaderboard';
     local('leaderboard', { top: ranking().slice(0, 5).map((p) => ({ name: p.name, avatar: p.avatar, score: p.score, rank: p.rank, prevRank: p.prevRank, streak: p.streak || 0 })),
       last: game.qIndex >= game.quiz.questions.length - 1 });
+    scheduleAuto(Math.min(game.autoSec, 8) * 1000);
   }
 
   function podium() {
-    game.state = 'end'; clearTimeout(game.timer);
+    game.state = 'end'; clearTimeout(game.timer); clearTimeout(game.autoT); local('auto', { ms: 0 });
     const ranked = ranking();
     local('podium', { all: ranked.map((p, i) => ({ name: p.name, avatar: p.avatar, score: p.score, rank: i + 1 })) });
     ranked.forEach((p, i) => send(p, 'p:final', { rank: i + 1, score: p.score, total: ranked.length }));
@@ -170,6 +181,7 @@ function HostSocket() {
 
   function next() {
     if (!game) return;
+    clearTimeout(game.autoT); local('auto', { ms: 0 });
     const q = game.quiz.questions[game.qIndex];
     const last = game.qIndex >= game.quiz.questions.length - 1;
     if (game.state === 'lobby' || game.state === 'leaderboard' || (game.state === 'question' && q && q.type === 'slide')) {
@@ -195,7 +207,7 @@ function HostSocket() {
         if (game.locked) return reply({ error: 'Игра закрыта ведущим' });
         if ([...game.players.values()].some((x) => x.name.toLowerCase() === name.toLowerCase() && x.connected)) return reply({ error: 'Это имя уже занято' });
         key = Math.random().toString(36).slice(2) + Date.now().toString(36);
-        p = { key, name, avatar: d.avatar || '🙂', score: 0, streak: 0, answer: null };
+        p = { key, name, avatar: String(d.avatar || 'a0').slice(0, 8), score: 0, streak: 0, answer: null };
         game.players.set(key, p);
       }
       p.conn = conn; p.connected = true; conn._key = key;
@@ -205,6 +217,11 @@ function HostSocket() {
         const q = game.quiz.questions[game.qIndex];
         send(p, 'p:start', { index: game.qIndex, q: publicQuestion(q, true) });
       }
+    } else if (msg.ev === 'player:react') {
+      const p = game.players.get(conn._key); const e = String(d.e || '');
+      if (!p || !REACTIONS.includes(e)) return;
+      const now = Date.now(); if (now - (p.lastReact || 0) < 500) return; p.lastReact = now;
+      local('react', { name: p.name, avatar: p.avatar, e });
     } else if (msg.ev === 'player:answer') {
       if (game.state !== 'question') return reply({ late: true });
       const p = game.players.get(conn._key); if (!p || p.answer) return reply({ dup: true });
@@ -217,7 +234,7 @@ function HostSocket() {
     }
   }
 
-  let mq = null; const conns = new Map();
+  let mq = null; const conns = new Map(); let autoSecPref = 15;
   function connFor(cid) {
     let c = conns.get(cid);
     if (!c) {
@@ -248,7 +265,7 @@ function HostSocket() {
       const r = await firstBroker({ clientId: 'kxh_' + rid(), will: { topic: alive, payload: '', retain: true, qos: 1 } });
       mq = r.client;
     } catch { return cb({ error: 'Нет связи с сервером игры. Проверь интернет и обнови страницу.' }); }
-    game = { pin, quiz, players: new Map(), state: 'lobby', qIndex: -1, locked: false };
+    game = { pin, quiz, players: new Map(), state: 'lobby', qIndex: -1, locked: false, autoSec: autoSecPref };
     mq.on('message', (topic, payload) => {
       if (topic !== KX_NS + pin + '/up') return;
       const m = dec(payload); if (!m || !m.from) return;
@@ -271,10 +288,12 @@ function HostSocket() {
     on(ev, fn) { handlers[ev] = fn; },
     emit(ev, data, cb) {
       if (ev === 'host:create') return create(data.quizId, cb || (() => {}));
+      if (ev === 'host:auto' && !game) { autoSecPref = Number(data) || 0; return; }
       if (!game) return;
       if (ev === 'host:next') next();
       else if (ev === 'host:end') podium();
       else if (ev === 'host:lock') game.locked = !!data;
+      else if (ev === 'host:auto') { autoSecPref = game.autoSec = Number(data) || 0; if (!game.autoSec) scheduleAuto(0); }
       else if (ev === 'host:kick') {
         for (const [k, p] of game.players) if (p.name === data) { send(p, 'p:kicked'); game.players.delete(k); }
         local('lobby', playersList());
