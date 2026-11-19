@@ -1,17 +1,27 @@
-// Сеть без сервера: браузер ведущего = игровой сервер, телефоны подключаются к нему через WebRTC (PeerJS).
+// Сеть без своего сервера: браузер ведущего = игровой сервер, сообщения идут через публичный MQTT-брокер (WebSocket).
 // Объекты HostSocket / PlayerSocket повторяют интерфейс socket.io: on(ev, fn) и emit(ev, data, cb).
-const PEER_PREFIX = 'kaxoote-v1-';
-const PEER_OPTS = { debug: 1, config: { iceServers: [
-  { urls: 'stun:stun.l.google.com:19302' },
-  { urls: 'stun:stun1.l.google.com:19302' },
-  { urls: 'stun:global.stun.twilio.com:3478' },
-  // бесплатные ретрансляторы — помогают, если сеть не пускает прямое соединение
-  { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
-  { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
-  { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' },
-  { urls: 'turn:freestun.net:3478', username: 'free', credential: 'free' },
-] } };
-if (window.KX_PEER) Object.assign(PEER_OPTS, window.KX_PEER); // свой сервер соединений (необязательно)
+// Связь через бесплатный публичный MQTT-брокер по защищённому WebSocket (порт 443-подобный, проходит через любые сети).
+const KX_NS = 'kaxoote/v2/';
+const BROKERS = window.KX_BROKERS || [
+  'wss://broker.emqx.io:8084/mqtt',
+  'wss://broker.hivemq.com:8884/mqtt',
+  'wss://test.mosquitto.org:8081/mqtt',
+];
+const rid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+function mqttConnect(url, opts) {
+  return new Promise((res, rej) => {
+    const c = mqtt.connect(url, { connectTimeout: 6000, reconnectPeriod: 2000, keepalive: 20, clean: true, ...opts });
+    const t = setTimeout(() => { c.end(true); rej(new Error('timeout')); }, 7000);
+    c.once('connect', () => { clearTimeout(t); res(c); });
+    c.once('error', () => {});
+  });
+}
+async function firstBroker(opts) {
+  for (const url of BROKERS) { try { return { client: await mqttConnect(url, opts), url }; } catch {} }
+  throw new Error('nobroker');
+}
+const enc = (o) => JSON.stringify(o);
+const dec = (b) => { try { return JSON.parse(b.toString()); } catch { return null; } };
 
 // ================= ВЕДУЩИЙ =================
 function HostSocket() {
@@ -207,42 +217,55 @@ function HostSocket() {
     }
   }
 
-  function onConn(conn) {
-    conn.on('data', (m) => onPlayerMsg(conn, m));
-    const gone = () => {
-      const p = conn._key && game && game.players.get(conn._key);
-      if (p && p.conn === conn) {
-        p.connected = false;
-        if (game.state === 'lobby') game.players.delete(conn._key);
-        local('lobby', playersList());
-      }
-    };
-    conn.on('close', gone); conn.on('error', gone);
+  let mq = null; const conns = new Map();
+  function connFor(cid) {
+    let c = conns.get(cid);
+    if (!c) {
+      c = { cid, open: true, send: (m) => { if (mq && c.open) mq.publish(KX_NS + game.pin + '/dn/' + cid, enc(m), { qos: 1 }); } };
+      conns.set(cid, c);
+    }
+    c.open = true; return c;
+  }
+  function gone(cid) {
+    const c = conns.get(cid); if (!c) return; c.open = false;
+    const p = c._key && game && game.players.get(c._key);
+    if (p && p.conn === c) {
+      p.connected = false;
+      if (game.state === 'lobby') game.players.delete(c._key);
+      local('lobby', playersList());
+    }
   }
 
-  function create(quizId, cb, tries = 0) {
-    Store.get(quizId).then((raw) => {
-      const quiz = cleanQuiz(raw);
-      if (!quiz || !quiz.questions.length) return cb({ error: 'Викторина пустая или не найдена' });
-      if (peer) { try { peer.destroy(); } catch {} }
-      const pin = String(Math.floor(100000 + Math.random() * 900000));
-      peer = new Peer(PEER_PREFIX + pin, PEER_OPTS);
-      let opened = false;
-      peer.on('open', () => {
-        opened = true;
-        game = { pin, quiz, players: new Map(), state: 'lobby', qIndex: -1, locked: false };
-        cb({ pin, title: quiz.title, count: quiz.questions.length });
-      });
-      peer.on('connection', onConn);
-      peer.on('disconnected', () => { try { peer.reconnect(); } catch {} });
-      peer.on('error', (e) => {
-        if (e.type === 'unavailable-id' && tries < 5) return create(quizId, cb, tries + 1);
-        if (!opened) cb({ error: 'Нет связи с сервером соединений. Проверь интернет и обнови страницу. (' + e.type + ')' });
-      });
+  async function create(quizId, cb) {
+    const raw = await Store.get(quizId);
+    const quiz = cleanQuiz(raw);
+    if (!quiz || !quiz.questions.length) return cb({ error: 'Викторина пустая или не найдена' });
+    if (mq) { try { mq.publish(KX_NS + game.pin + '/alive', '', { retain: true }); mq.end(true); } catch {} mq = null; }
+    conns.clear();
+    const pin = String(Math.floor(100000 + Math.random() * 900000));
+    const alive = KX_NS + pin + '/alive';
+    try {
+      const r = await firstBroker({ clientId: 'kxh_' + rid(), will: { topic: alive, payload: '', retain: true, qos: 1 } });
+      mq = r.client;
+    } catch { return cb({ error: 'Нет связи с сервером игры. Проверь интернет и обнови страницу.' }); }
+    game = { pin, quiz, players: new Map(), state: 'lobby', qIndex: -1, locked: false };
+    mq.on('message', (topic, payload) => {
+      if (topic !== KX_NS + pin + '/up') return;
+      const m = dec(payload); if (!m || !m.from) return;
+      if (m.t === 'bye') return gone(m.from);
+      if (m.t === 'ping') { connFor(m.from).send({ t: 'pong' }); return; }
+      onPlayerMsg(connFor(m.from), m);
+    });
+    mq.on('connect', () => { // после переподключения
+      mq.subscribe(KX_NS + pin + '/up', { qos: 1 });
+      mq.publish(alive, enc({ t: Date.now() }), { retain: true, qos: 1 });
+    });
+    mq.subscribe(KX_NS + pin + '/up', { qos: 1 }, () => {
+      mq.publish(alive, enc({ t: Date.now() }), { retain: true, qos: 1 }, () => cb({ pin, title: quiz.title, count: quiz.questions.length }));
     });
   }
 
-  addEventListener('beforeunload', () => { if (game) sendAll('p:hostleft'); });
+  addEventListener('beforeunload', () => { if (game && mq) { sendAll('p:hostleft'); mq.publish(KX_NS + game.pin + '/alive', '', { retain: true }); } });
 
   return {
     on(ev, fn) { handlers[ev] = fn; },
@@ -263,58 +286,65 @@ function HostSocket() {
 // ================= ИГРОК =================
 function PlayerSocket() {
   const handlers = {}, pending = {};
-  let peer = null, conn = null, pin = null, seq = 0, connecting = null, wasConnected = false;
+  const cid = 'kxp_' + rid();
+  let mq = null, pin = null, seq = 0, joining = null, everJoined = false;
   const fire = (ev, d) => { if (handlers[ev]) handlers[ev](d); };
+  const up = () => KX_NS + pin + '/up';
 
-  function ensurePeer() {
-    if (peer && !peer.destroyed) return Promise.resolve(peer);
-    return new Promise((res, rej) => {
-      peer = new Peer(PEER_OPTS);
-      peer.on('open', () => res(peer));
-      peer.on('error', (e) => {
-        if (e.type === 'peer-unavailable') { connecting = null; const f = pending.__connect; delete pending.__connect; f && f(new Error('nogame')); }
-        else rej(e);
-      });
-      peer.on('disconnected', () => { try { peer.reconnect(); } catch {} });
-    });
+  function onMsg(topic, payload) {
+    const m = dec(payload); if (!m) return;
+    if (m.t === 'ack' && pending[m.id]) { pending[m.id](m.res); delete pending[m.id]; }
+    else if (m.t === 'ev') fire(m.ev, m.data);
   }
 
-  function connect(p) {
-    if (conn && conn.open && pin === p) return Promise.resolve();
-    if (connecting && pin === p) return connecting;
-    pin = p;
-    connecting = ensurePeer().then(() => new Promise((res, rej) => {
-      const c = peer.connect(PEER_PREFIX + p, { reliable: true });
-      const timer = setTimeout(() => { delete pending.__connect; rej(new Error('timeout')); }, 20000);
-      pending.__connect = (err) => { clearTimeout(timer); rej(err); };
-      c.on('open', () => {
-        clearTimeout(timer); delete pending.__connect; conn = c; connecting = null;
-        if (wasConnected) setTimeout(() => fire('connect'), 50);
-        wasConnected = true; res();
+  // Ищем игру: на каком брокере есть отметка «ведущий онлайн»
+  async function findGame(p) {
+    for (const url of BROKERS) {
+      let c;
+      try { c = await mqttConnect(url, { clientId: cid, will: { topic: KX_NS + p + '/up', payload: enc({ t: 'bye', from: cid }), qos: 1 } }); } catch { continue; }
+      const found = await new Promise((res) => {
+        const t = setTimeout(() => res(false), 3500);
+        c.on('message', (topic, payload) => { if (topic === KX_NS + p + '/alive') { clearTimeout(t); res(payload.length > 0); } });
+        c.subscribe(KX_NS + p + '/alive', { qos: 1 });
       });
-      c.on('data', (m) => {
-        if (!m) return;
-        if (m.t === 'ack' && pending[m.id]) { pending[m.id](m.res); delete pending[m.id]; }
-        else if (m.t === 'ev') fire(m.ev, m.data);
-      });
-      c.on('close', () => { if (conn === c) { conn = null; setTimeout(() => connect(pin).catch(() => {}), 1500); } });
-    })).catch((e) => { connecting = null; throw e; });
-    return connecting;
+      if (found) {
+        c.unsubscribe(KX_NS + p + '/alive');
+        c.removeAllListeners('message');
+        c.on('message', onMsg);
+        c.on('connect', () => { c.subscribe(KX_NS + p + '/dn/' + cid, { qos: 1 }); if (everJoined) setTimeout(() => fire('connect'), 300); });
+        await new Promise((res) => c.subscribe(KX_NS + p + '/dn/' + cid, { qos: 1 }, res));
+        return c;
+      }
+      c.end(true);
+    }
+    return null;
   }
+
+  function send(ev, data, cb) {
+    const id = ++seq;
+    if (cb) {
+      pending[id] = cb;
+      setTimeout(() => { if (pending[id]) { delete pending[id]; cb({ error: 'Ведущий не отвечает. Проверь, что игра открыта.' }); } }, 10000);
+    }
+    mq.publish(up(), enc({ t: 'emit', ev, id, data, from: cid }), { qos: 1 });
+  }
+
+  addEventListener('pagehide', () => { if (mq && pin) mq.publish(up(), enc({ t: 'bye', from: cid })); });
 
   return {
     on(ev, fn) { handlers[ev] = fn; },
     emit(ev, data, cb) {
-      const go = () => {
-        const id = ++seq; if (cb) pending[id] = cb;
-        try { conn.send({ t: 'emit', ev, id, data }); } catch { cb && cb({ error: 'Связь потеряна' }); }
-      };
       if (ev === 'player:join') {
-        connect(String(data.pin)).then(go).catch((e) => cb && cb({ error: e.message === 'nogame' ? 'Игра с таким PIN не найдена. Проверь PIN и что ведущий открыл игру на этом же сайте.'
-          : e.message === 'timeout' ? 'Игра найдена, но сеть не даёт подключиться. Попробуй другую Wi-Fi или мобильный интернет.'
-          : 'Нет связи с сервером соединений. Проверь интернет.' }));
-      } else if (conn && conn.open) go();
-      else connect(pin).then(go).catch(() => cb && cb({ error: 'Связь потеряна' }));
+        const p = String(data.pin);
+        const ready = mq && pin === p ? Promise.resolve(mq) : (joining = (async () => {
+          if (mq) { try { mq.end(true); } catch {} mq = null; }
+          const c = await findGame(p); if (!c) throw new Error('nogame');
+          mq = c; pin = p; return c;
+        })());
+        ready.then(() => send(ev, data, (res) => { if (res && res.ok) everJoined = true; cb && cb(res); }))
+          .catch(() => cb && cb({ error: 'Игра с таким PIN не найдена. Проверь PIN — ведущий должен быть открыт на этом же сайте.' }));
+      } else if (mq) send(ev, data, cb);
+      else cb && cb({ error: 'Связь потеряна' });
     },
   };
 }

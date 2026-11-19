@@ -46,7 +46,7 @@
         if (silent) { store.set('kx-' + pin, ''); show('sName'); return; }
         const err = silent ? $('#pinErr') : ($('#sName').classList.contains('on') ? $('#nameErr') : $('#pinErr'));
         err.textContent = res.error; FX.wrong(); FX.vibrate(200);
-        if (res.error.includes('PIN')) show('sPin');
+        if (res.error.includes('PIN')) { $('#pinErr').textContent = res.error; show('sPin'); }
         return;
       }
       me.name = res.name; me.avatar = avatar; me.score = res.score || 0;
