@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kaxoote — редактор</title>
+<link rel="stylesheet" href="style.css">
+<style>
+body{background:#f2f1f7;color:#1d1d2b}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.08);position:sticky;top:0;z-index:10;flex-wrap:wrap}
+header .logo{color:#46178f}
+header .logo b{background:#46178f;color:#fff}
+header input{flex:1;min-width:200px;font-size:18px;font-weight:800;padding:10px 12px;border:2px solid #e3e1ee;border-radius:10px}
+.btn{box-shadow:0 3px 0 rgba(0,0,0,.15)}
+.btn.sm{padding:8px 12px;min-height:40px;font-size:14px}
+.btn.purple{background:#46178f;color:#fff}
+.btn.lite{background:#f1f0f6;color:#1d1d2b}
+.btn.red{background:#e21b3c;color:#fff}
+.layout{display:grid;grid-template-columns:270px minmax(0,1fr) 300px;gap:16px;padding:16px;align-items:start}
+.side{background:#fff;border-radius:14px;padding:10px;display:grid;gap:8px;position:sticky;top:76px;max-height:calc(100vh - 92px);overflow:auto}
+.qi{display:flex;gap:8px;align-items:center;border:2px solid #eee;border-radius:10px;padding:8px;cursor:pointer;background:#fff;text-align:left;width:100%}
+.qi.on{border-color:#46178f;background:#f5efff}
+.qi .num{font-weight:900;color:#864cbf;width:22px}
+.qi .tx{flex:1;font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qi .tp{font-size:11px;color:#6b6b80;display:block;font-weight:600}
+.panel{background:#fff;border-radius:14px;padding:20px;display:grid;gap:16px}
+label.f{display:grid;gap:6px;font-weight:800;font-size:14px}
+.inp,textarea.inp,select.inp{width:100%;padding:12px;border:2px solid #e3e1ee;border-radius:10px;font-size:16px;color:#1d1d2b;background:#fff}
+textarea.inp{min-height:70px;resize:vertical}
+.qtext{font-size:22px;font-weight:800;text-align:center}
+.imgbox{border:3px dashed #d6d2e6;border-radius:14px;min-height:180px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;padding:12px;position:relative;background:#faf9fd}
+.imgbox img{max-height:260px;max-width:100%;border-radius:10px}
+.imgbox.drop{border-color:#46178f;background:#f5efff}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.oe{display:flex;align-items:center;gap:8px;border-radius:10px;padding:8px;color:#fff}
+.oe .shape{width:30px;height:30px;flex:none}
+.oe input[type=text]{flex:1;border:0;border-radius:8px;padding:10px;font-size:16px;font-weight:700;color:#1d1d2b}
+.oe .ck{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.3);border:3px solid #fff;flex:none;font-weight:900;color:#fff}
+.oe .ck.on{background:#2bd96b}
+.oe .x{background:rgba(0,0,0,.25);color:#fff;width:32px;height:32px;flex:none}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.list{display:grid;gap:8px}
+.li{display:flex;gap:8px;align-items:center}
+.li b{width:28px;text-align:center;color:#864cbf}
+.hint{font-size:13px;color:#6b6b80;font-weight:500}
+.typepick{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.typepick button{background:#f1f0f6;padding:12px;font-weight:800;text-align:left;border-radius:10px;border:2px solid transparent}
+.typepick button:hover{border-color:#46178f}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1d1d2b;color:#fff;padding:12px 20px;border-radius:10px;font-weight:800;z-index:99;display:none}
+.home{max-width:1100px;margin:0 auto;padding:20px}
+.qgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;margin-top:16px}
+.qg{background:#fff;border-radius:14px;padding:16px;display:grid;gap:8px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.qg h3{margin:0}
+.qg p{margin:0;color:#6b6b80;font-size:14px}
+.dlg{position:fixed;inset:0;background:rgba(20,10,40,.55);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+.dlg.on{display:flex}
+.dlg .card{width:min(520px,100%)}
+@media(max-width:1000px){.layout{grid-template-columns:1fr}.side{position:static;max-height:none}}
+@media(max-width:600px){.opts{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div id="homeView">
+  <header><a href="/" class="logo" style="text-decoration:none"><b>Ka</b>xoote</a><span style="flex:1;font-weight:800">Мои викторины</span>
+    <label class="btn lite sm" style="cursor:pointer">Импорт .json<input type="file" accept=".json" id="importFile" hidden></label>
+    <button class="btn purple sm" id="newQuiz">+ Новая викторина</button></header>
+  <div class="home"><div class="qgrid" id="qgrid"></div></div>
+</div>
+
+<div id="editView" style="display:none">
+  <header>
+    <a href="#" class="logo" id="back" style="text-decoration:none"><b>Ka</b>xoote</a>
+    <input id="title" placeholder="Название викторины">
+    <button class="btn lite sm" id="settingsBtn">Описание и обложка</button>
+    <button class="btn lite sm" id="exportBtn">Экспорт</button>
+    <a class="btn lite sm" href="host.html" style="text-decoration:none">Играть</a>
+    <button class="btn purple sm" id="saveBtn">Сохранить</button>
+  </header>
+  <div class="layout">
+    <aside class="side"><div id="qlist" style="display:grid;gap:8px"></div><button class="btn purple sm" id="addQ">+ Добавить вопрос</button></aside>
+    <section class="panel" id="qedit"></section>
+    <aside class="panel" id="qside"></aside>
+  </div>
+</div>
+
+<div class="dlg" id="typeDlg"><div class="card"><h3 style="margin-top:0">Тип вопроса</h3><div class="typepick" id="typePick"></div><div style="text-align:right;margin-top:12px"><button class="btn lite sm" onclick="this.closest('.dlg').classList.remove('on')">Отмена</button></div></div></div>
+<div class="dlg" id="setDlg"><div class="card" style="display:grid;gap:12px">
+  <h3 style="margin:0">Описание и обложка</h3>
+  <label class="f">Описание<textarea class="inp" id="desc"></textarea></label>
+  <label class="f">Обложка (ссылка на картинку)<input class="inp" id="cover" placeholder="https://… или загрузи файл"></label>
+  <label class="btn lite sm" style="cursor:pointer;justify-self:start">Загрузить файл<input type="file" accept="image/*" id="coverFile" hidden></label>
+  <div style="text-align:right"><button class="btn purple sm" onclick="this.closest('.dlg').classList.remove('on')">Готово</button></div>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script src="fx.js"></script>
+<script>
+{
+  let quiz = null, quizId = null, cur = 0, dirty = false;
+  const TIMES = [5, 10, 20, 30, 45, 60, 90, 120, 240];
+  const TYPE_DESC = {
+    quiz: 'От 2 до 6 ответов, можно несколько верных', truefalse: 'Два варианта: правда или миф', type: 'Игрок пишет ответ сам',
+    slider: 'Угадай число на шкале', order: 'Расставь пункты по порядку', poll: 'Опрос мнений без очков', slide: 'Информационный слайд без ответа',
+  };
+  const toast = (m) => { const t = $('#toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(t._h); t._h = setTimeout(() => t.style.display = 'none', 2200); };
+
+  function blank(type) {
+    const b = { type, text: '', image: '', time: 20, points: 'standard', explain: '' };
+    if (type === 'quiz') Object.assign(b, { options: ['', '', '', ''], correct: [0], multi: false });
+    if (type === 'truefalse') Object.assign(b, { labels: ['Правда', 'Миф'], correct: [0] });
+    if (type === 'type') Object.assign(b, { accept: [''], time: 30 });
+    if (type === 'slider') Object.assign(b, { min: 0, max: 100, step: 1, answer: 50, tolerance: 0, unit: '', time: 30 });
+    if (type === 'order') Object.assign(b, { items: ['', '', '', ''], time: 30 });
+    if (type === 'poll') Object.assign(b, { options: ['', '', '', ''], points: 'none' });
+    if (type === 'slide') Object.assign(b, { body: '', points: 'none' });
+    return b;
+  }
+
+  // ---------- список викторин ----------
+  async function loadHome() {
+    $('#homeView').style.display = ''; $('#editView').style.display = 'none';
+    const list = await fetch('/api/quizzes').then((r) => r.json());
+    $('#qgrid').innerHTML = list.map((q) => `<div class="qg"><h3>${esc(q.title)}</h3><p>${q.count} вопросов</p><p>${esc(q.description)}</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn purple sm" data-e="${esc(q.id)}">Изменить</button><button class="btn lite sm" data-c="${esc(q.id)}">Копия</button><button class="btn red sm" data-d="${esc(q.id)}">Удалить</button></div></div>`).join('') || '<p>Пока пусто — создай первую викторину.</p>';
+    $('#qgrid').querySelectorAll('[data-e]').forEach((b) => b.onclick = () => openQuiz(b.dataset.e));
+    $('#qgrid').querySelectorAll('[data-c]').forEach((b) => b.onclick = async () => { const q = await fetch('/api/quizzes/' + b.dataset.c).then((r) => r.json()); delete q.id; q.title += ' (копия)'; await fetch('/api/quizzes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(q) }); loadHome(); });
+    $('#qgrid').querySelectorAll('[data-d]').forEach((b) => b.onclick = () => confirmDlg('Удалить эту викторину навсегда?', async () => { await fetch('/api/quizzes/' + b.dataset.d, { method: 'DELETE' }); loadHome(); }));
+  }
+  function confirmDlg(msg, yes) {
+    const d = document.createElement('div'); d.className = 'dlg on';
+    d.innerHTML = `<div class="card"><p style="font-weight:800;font-size:18px;margin-top:0">${esc(msg)}</p><div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn lite sm">Отмена</button><button class="btn red sm">Да</button></div></div>`;
+    document.body.appendChild(d);
+    const [no, ok] = d.querySelectorAll('button'); no.onclick = () => d.remove(); ok.onclick = () => { d.remove(); yes(); };
+  }
+
+  $('#newQuiz').onclick = () => { quizId = null; quiz = { title: 'Новая викторина', description: '', cover: '', questions: [blank('quiz')] }; cur = 0; openEditor(); };
+  $('#importFile').onchange = async (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    try { const q = JSON.parse(await f.text()); delete q.id; if (!Array.isArray(q.questions)) throw 0;
+      await fetch('/api/quizzes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(q) }); toast('Импортировано'); loadHome();
+    } catch { toast('Файл не похож на викторину'); }
+    e.target.value = '';
+  };
+
+  async function openQuiz(id) {
+    const q = await fetch('/api/quizzes/' + id).then((r) => r.json());
+    quizId = q.id; delete q.id; quiz = q; quiz.questions = quiz.questions || []; cur = 0; openEditor();
+  }
+
+  // ---------- редактор ----------
+  function openEditor() {
+    $('#homeView').style.display = 'none'; $('#editView').style.display = '';
+    $('#title').value = quiz.title || ''; $('#desc').value = quiz.description || ''; $('#cover').value = quiz.cover || '';
+    dirty = false; renderList(); renderQ();
+  }
+  $('#title').oninput = (e) => { quiz.title = e.target.value; dirty = true; };
+  $('#desc').oninput = (e) => { quiz.description = e.target.value; dirty = true; };
+  $('#cover').oninput = (e) => { quiz.cover = e.target.value; dirty = true; };
+  $('#coverFile').onchange = async (e) => { const url = await upload(e.target.files[0]); if (url) { quiz.cover = url; $('#cover').value = url; dirty = true; toast('Обложка загружена'); } };
+  $('#settingsBtn').onclick = () => $('#setDlg').classList.add('on');
+  $('#back').onclick = (e) => { e.preventDefault(); if (dirty) confirmDlg('Есть несохранённые изменения. Выйти без сохранения?', loadHome); else loadHome(); };
+  $('#exportBtn').onclick = () => {
+    const blob = new Blob([JSON.stringify(quiz, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = (quiz.title || 'quiz') + '.json'; a.click();
+  };
+  async function save() {
+    const problems = validate();
+    const res = await fetch('/api/quizzes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: quizId, ...quiz }) }).then((r) => r.json());
+    quizId = res.id; dirty = false;
+    toast(problems.length ? 'Сохранено. Проверь: ' + problems[0] : 'Сохранено ✔');
+  }
+  $('#saveBtn').onclick = save;
+  document.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's' && $('#editView').style.display !== 'none') { e.preventDefault(); save(); } });
+  window.addEventListener('beforeunload', (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+
+  function validate() {
+    const out = [];
+    quiz.questions.forEach((q, i) => {
+      const n = `вопрос ${i + 1}`;
+      if (!q.text.trim()) out.push(n + ' без текста');
+      if ((q.type === 'quiz' || q.type === 'poll') && q.options.filter((o) => o.trim()).length < 2) out.push(n + ': нужно минимум 2 ответа');
+      if (q.type === 'type' && !q.accept.some((a) => a.trim())) out.push(n + ': нет правильного ответа');
+      if (q.type === 'order' && q.items.filter((o) => o.trim()).length < 2) out.push(n + ': нужно минимум 2 пункта');
+    });
+    return out;
+  }
+
+  function renderList() {
+    $('#qlist').innerHTML = quiz.questions.map((q, i) => `<button class="qi ${i === cur ? 'on' : ''}" data-i="${i}"><span class="num">${i + 1}</span><span class="tx"><span class="tp">${TYPE_NAMES[q.type]}</span>${esc(q.text || '(без текста)')}</span></button>`).join('');
+    $('#qlist').querySelectorAll('.qi').forEach((b) => b.onclick = () => { cur = +b.dataset.i; renderList(); renderQ(); });
+  }
+
+  $('#addQ').onclick = () => $('#typeDlg').classList.add('on');
+  $('#typePick').innerHTML = Object.keys(TYPE_NAMES).map((t) => `<button data-t="${t}">${TYPE_NAMES[t]}<br><span class="hint">${TYPE_DESC[t]}</span></button>`).join('');
+  $('#typePick').querySelectorAll('button').forEach((b) => b.onclick = () => {
+    quiz.questions.splice(cur + 1, 0, blank(b.dataset.t)); cur = Math.min(cur + 1, quiz.questions.length - 1);
+    if (quiz.questions.length === 1) cur = 0;
+    $('#typeDlg').classList.remove('on'); dirty = true; renderList(); renderQ();
+  });
+
+  async function upload(file) {
+    if (!file) return null;
+    if (file.size > 12e6) { toast('Картинка слишком большая (макс. 12 МБ)'); return null; }
+    const data = await new Promise((r) => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(file); });
+    const res = await fetch('/api/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data }) }).then((r) => r.json());
+    if (res.error) { toast(res.error); return null; }
+    return res.url;
+  }
+
+  function renderQ() {
+    const ed = $('#qedit'), side = $('#qside');
+    if (!quiz.questions.length) { ed.innerHTML = '<p>Нет вопросов. Нажми «Добавить вопрос».</p>'; side.innerHTML = ''; return; }
+    const q = quiz.questions[cur];
+    const set = (k, v, redraw) => { q[k] = v; dirty = true; if (redraw) renderQ(); if (k === 'text') renderList(); };
+
+    let html = `<input class="inp qtext" id="qt" placeholder="${q.type === 'slide' ? 'Заголовок слайда' : 'Напиши вопрос'}" value="${esc(q.text)}" maxlength="160">
+      <div class="imgbox" id="ib">${q.image ? `<img src="${esc(q.image)}" alt=""><button class="btn lite sm" id="rmImg">Убрать картинку</button>` : `<div style="font-weight:800">Перетащи картинку сюда</div><div class="hint">или</div>`}
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center"><label class="btn lite sm" style="cursor:pointer">Загрузить файл<input type="file" accept="image/*" id="imgFile" hidden></label><button class="btn lite sm" id="imgUrl">Вставить ссылку</button></div></div>`;
+
+    if (q.type === 'quiz' || q.type === 'poll') {
+      html += `<div class="opts">${q.options.map((o, i) => `<div class="oe a${i}"><span class="shape">${SHAPES[i]}</span><input type="text" data-o="${i}" value="${esc(o)}" placeholder="Ответ ${i + 1}" maxlength="80">
+        ${q.type === 'quiz' ? `<button class="ck ${q.correct.includes(i) ? 'on' : ''}" data-c="${i}" title="Правильный">${q.correct.includes(i) ? '✔' : ''}</button>` : ''}
+        ${q.options.length > 2 ? `<button class="x" data-x="${i}" title="Удалить">✕</button>` : ''}</div>`).join('')}</div>
+        ${q.options.length < 6 ? '<button class="btn lite sm" id="addOpt" style="justify-self:start">+ ещё ответ</button>' : ''}`;
+    } else if (q.type === 'truefalse') {
+      html += `<div class="opts">${q.labels.map((o, i) => `<div class="oe a${i === 0 ? 1 : 0}"><span class="shape">${SHAPES[i === 0 ? 1 : 0]}</span><input type="text" data-l="${i}" value="${esc(o)}" maxlength="30"><button class="ck ${q.correct[0] === i ? 'on' : ''}" data-tf="${i}">${q.correct[0] === i ? '✔' : ''}</button></div>`).join('')}</div>
+        <div class="hint">Подписи кнопок можно поменять (например «Да / Нет»). Отметь правильный вариант.</div>`;
+    } else if (q.type === 'type') {
+      html += `<div class="list">${q.accept.map((a, i) => `<div class="li"><b>${i + 1}</b><input class="inp" data-a="${i}" value="${esc(a)}" placeholder="${i ? 'Другой вариант написания' : 'Правильный ответ'}" maxlength="40">${q.accept.length > 1 ? `<button class="btn lite sm" data-ax="${i}">✕</button>` : ''}</div>`).join('')}</div>
+        <button class="btn lite sm" id="addAcc" style="justify-self:start">+ вариант написания</button>
+        <div class="hint">Регистр, «ё/е» и знаки препинания не важны.</div>`;
+    } else if (q.type === 'slider') {
+      html += `<div class="row">
+        <label class="f">От<input class="inp" type="number" data-n="min" value="${q.min}"></label>
+        <label class="f">До<input class="inp" type="number" data-n="max" value="${q.max}"></label>
+        <label class="f">Шаг<input class="inp" type="number" data-n="step" value="${q.step}" min="0.01" step="any"></label>
+        <label class="f">Правильно<input class="inp" type="number" data-n="answer" value="${q.answer}"></label>
+        <label class="f">Допуск ±<input class="inp" type="number" data-n="tolerance" value="${q.tolerance}" min="0"></label>
+        <label class="f">Единица<input class="inp" data-s="unit" value="${esc(q.unit)}" placeholder="лет, км…"></label></div>
+        <div class="hint">Чем ближе ответ к правильному (в пределах допуска), тем больше очков.</div>`;
+    } else if (q.type === 'order') {
+      html += `<div class="hint">Пиши пункты в ПРАВИЛЬНОМ порядке — игрокам они перемешаются.</div><div class="list">${q.items.map((a, i) => `<div class="li"><b>${i + 1}</b><input class="inp" data-it="${i}" value="${esc(a)}" maxlength="60" placeholder="Пункт ${i + 1}">${q.items.length > 2 ? `<button class="btn lite sm" data-itx="${i}">✕</button>` : ''}</div>`).join('')}</div>
+        ${q.items.length < 6 ? '<button class="btn lite sm" id="addIt" style="justify-self:start">+ пункт</button>' : ''}`;
+    } else if (q.type === 'slide') {
+      html += `<label class="f">Текст слайда<textarea class="inp" id="body" style="min-height:160px">${esc(q.body)}</textarea></label>`;
+    }
+    ed.innerHTML = html;
+
+    // боковая панель
+    side.innerHTML = `
+      <label class="f">Тип вопроса<select class="inp" id="tsel">${Object.keys(TYPE_NAMES).map((t) => `<option value="${t}" ${t === q.type ? 'selected' : ''}>${TYPE_NAMES[t]}</option>`).join('')}</select></label>
+      ${q.type !== 'slide' ? `<label class="f">Время<select class="inp" id="time">${TIMES.map((t) => `<option ${t === q.time ? 'selected' : ''} value="${t}">${t} сек</option>`).join('')}</select></label>` : ''}
+      ${!['poll', 'slide'].includes(q.type) ? `<label class="f">Очки<select class="inp" id="pts"><option value="standard">Обычные</option><option value="double">Двойные ×2</option><option value="none">Без очков</option></select></label>` : ''}
+      ${q.type === 'quiz' ? `<label class="f" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="multi" ${q.multi ? 'checked' : ''} style="width:22px;height:22px"> Несколько правильных (игрок выбирает все)</label>` : ''}
+      ${q.type !== 'slide' ? `<label class="f">Пояснение после ответа<textarea class="inp" id="explain" placeholder="Интересный факт или ссылка на стих">${esc(q.explain)}</textarea></label>` : ''}
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn lite sm" id="up">▲</button><button class="btn lite sm" id="down">▼</button>
+        <button class="btn lite sm" id="dup">Копия</button><button class="btn red sm" id="del">Удалить</button></div>`;
+    if ($('#pts')) $('#pts').value = q.points;
+
+    // события
+    $('#qt').oninput = (e) => set('text', e.target.value);
+    const ib = $('#ib');
+    $('#imgFile').onchange = async (e) => { const u = await upload(e.target.files[0]); if (u) set('image', u, true); };
+    $('#imgUrl').onclick = () => {
+      const box = document.createElement('div'); box.className = 'dlg on';
+      box.innerHTML = `<div class="card" style="display:grid;gap:10px"><b>Ссылка на картинку</b><input class="inp" placeholder="https://…"><div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn lite sm">Отмена</button><button class="btn purple sm">Вставить</button></div></div>`;
+      document.body.appendChild(box); const inp = box.querySelector('input'); inp.focus();
+      const [c, ok] = box.querySelectorAll('button'); c.onclick = () => box.remove(); ok.onclick = () => { if (inp.value.trim()) set('image', inp.value.trim(), true); box.remove(); };
+    };
+    if ($('#rmImg')) $('#rmImg').onclick = () => set('image', '', true);
+    ib.ondragover = (e) => { e.preventDefault(); ib.classList.add('drop'); };
+    ib.ondragleave = () => ib.classList.remove('drop');
+    ib.ondrop = async (e) => { e.preventDefault(); ib.classList.remove('drop'); const u = await upload(e.dataTransfer.files[0]); if (u) set('image', u, true); };
+
+    ed.querySelectorAll('[data-o]').forEach((i) => i.oninput = () => { q.options[+i.dataset.o] = i.value; dirty = true; });
+    ed.querySelectorAll('[data-c]').forEach((b) => b.onclick = () => {
+      const i = +b.dataset.c;
+      if (q.multi) { q.correct = q.correct.includes(i) ? q.correct.filter((x) => x !== i) : [...q.correct, i]; if (!q.correct.length) q.correct = [i]; }
+      else q.correct = [i];
+      dirty = true; renderQ();
+    });
+    ed.querySelectorAll('[data-x]').forEach((b) => b.onclick = () => {
+      const i = +b.dataset.x; q.options.splice(i, 1);
+      if (q.correct) q.correct = q.correct.filter((x) => x !== i).map((x) => (x > i ? x - 1 : x)); if (q.correct && !q.correct.length) q.correct = [0];
+      dirty = true; renderQ();
+    });
+    if ($('#addOpt')) $('#addOpt').onclick = () => { q.options.push(''); dirty = true; renderQ(); };
+    ed.querySelectorAll('[data-l]').forEach((i) => i.oninput = () => { q.labels[+i.dataset.l] = i.value; dirty = true; });
+    ed.querySelectorAll('[data-tf]').forEach((b) => b.onclick = () => set('correct', [+b.dataset.tf], true));
+    ed.querySelectorAll('[data-a]').forEach((i) => i.oninput = () => { q.accept[+i.dataset.a] = i.value; dirty = true; });
+    ed.querySelectorAll('[data-ax]').forEach((b) => b.onclick = () => { q.accept.splice(+b.dataset.ax, 1); dirty = true; renderQ(); });
+    if ($('#addAcc')) $('#addAcc').onclick = () => { q.accept.push(''); dirty = true; renderQ(); };
+    ed.querySelectorAll('[data-n]').forEach((i) => i.oninput = () => { const v = parseFloat(i.value); if (!isNaN(v)) { q[i.dataset.n] = v; dirty = true; } });
+    ed.querySelectorAll('[data-s]').forEach((i) => i.oninput = () => { q[i.dataset.s] = i.value; dirty = true; });
+    ed.querySelectorAll('[data-it]').forEach((i) => i.oninput = () => { q.items[+i.dataset.it] = i.value; dirty = true; });
+    ed.querySelectorAll('[data-itx]').forEach((b) => b.onclick = () => { q.items.splice(+b.dataset.itx, 1); dirty = true; renderQ(); });
+    if ($('#addIt')) $('#addIt').onclick = () => { q.items.push(''); dirty = true; renderQ(); };
+    if ($('#body')) $('#body').oninput = (e) => set('body', e.target.value);
+
+    $('#tsel').onchange = (e) => {
+      const nq = blank(e.target.value); nq.text = q.text; nq.image = q.image; nq.explain = q.explain;
+      if (q.options && nq.options) nq.options = q.options.slice();
+      quiz.questions[cur] = nq; dirty = true; renderList(); renderQ();
+    };
+    if ($('#time')) $('#time').onchange = (e) => set('time', +e.target.value);
+    if ($('#pts')) $('#pts').onchange = (e) => set('points', e.target.value);
+    if ($('#multi')) $('#multi').onchange = (e) => { q.multi = e.target.checked; if (!q.multi) q.correct = [q.correct[0] || 0]; dirty = true; renderQ(); };
+    if ($('#explain')) $('#explain').oninput = (e) => set('explain', e.target.value);
+    $('#up').onclick = () => { if (cur > 0) { const a = quiz.questions; [a[cur - 1], a[cur]] = [a[cur], a[cur - 1]]; cur--; dirty = true; renderList(); renderQ(); } };
+    $('#down').onclick = () => { const a = quiz.questions; if (cur < a.length - 1) { [a[cur + 1], a[cur]] = [a[cur], a[cur + 1]]; cur++; dirty = true; renderList(); renderQ(); } };
+    $('#dup').onclick = () => { quiz.questions.splice(cur + 1, 0, JSON.parse(JSON.stringify(q))); cur++; dirty = true; renderList(); renderQ(); };
+    $('#del').onclick = () => { if (quiz.questions.length === 1) return toast('Нужен хотя бы один вопрос'); quiz.questions.splice(cur, 1); cur = Math.max(0, cur - 1); dirty = true; renderList(); renderQ(); };
+  }
+
+  loadHome();
+}
+</script>
+</body>
+</html>

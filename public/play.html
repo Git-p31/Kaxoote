@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#46178f">
+<title>Kaxoote — игрок</title>
+<link rel="stylesheet" href="style.css">
+<style>
+body{overscroll-behavior:none}
+.screen{padding:16px;min-height:100dvh}
+.joinbox{width:min(380px,100%);display:grid;gap:12px}
+.avatars{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
+.avatars button{font-size:26px;background:#f1f0f6;padding:6px 0;border-radius:10px;border:3px solid transparent}
+.avatars button.sel{border-color:#864cbf;background:#efe4ff}
+.err{color:#e21b3c;font-weight:800;min-height:1.4em}
+.hdr{display:flex;justify-content:space-between;align-items:center;gap:10px;font-weight:800;margin-bottom:12px}
+.hdr .me{background:rgba(0,0,0,.3);padding:6px 12px;border-radius:999px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.big{font-size:clamp(26px,7vw,40px);font-weight:900;margin:0}
+.qtext{background:#fff;color:#1d1d2b;border-radius:12px;padding:12px 14px;font-weight:800;font-size:18px;text-align:center;margin-bottom:12px}
+.grid{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid.one{grid-template-columns:1fr}
+.ans{color:#fff;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:12px;font-weight:800;font-size:18px;box-shadow:0 6px 0 rgba(0,0,0,.25);min-height:110px;transition:transform .1s,opacity .2s}
+.ans:active{transform:scale(.96)}
+.ans .shape{width:52px;height:52px}
+.ans.sel{outline:5px solid #fff;outline-offset:-5px}
+.ans.dim{opacity:.35}
+.submit{margin-top:12px;width:100%;font-size:20px}
+.typein{width:100%;padding:18px;font-size:24px;font-weight:800;border-radius:12px;border:0;text-align:center;color:#1d1d2b}
+.sl{width:100%;margin:30px 0 10px;accent-color:#ffc21a;height:40px}
+.slval{font-size:64px;font-weight:900;text-align:center}
+.ord{display:grid;gap:10px}
+.ord .it{display:flex;align-items:center;gap:10px;background:#fff;color:#1d1d2b;border-radius:12px;padding:10px 12px;font-weight:800;font-size:18px;touch-action:none;user-select:none}
+.ord .it.drag{opacity:.6;transform:scale(1.03);box-shadow:0 10px 20px rgba(0,0,0,.3)}
+.ord .it .n{background:#864cbf;color:#fff;border-radius:8px;width:34px;height:34px;display:grid;place-items:center;flex:none}
+.ord .it .t{flex:1}
+.ord .it button{width:44px;height:44px;background:#f1f0f6;font-size:18px;font-weight:900}
+#sRes{padding:0}
+.result{align-self:stretch;width:100%;min-height:100dvh;padding:24px 16px 70px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.result.ok{background:linear-gradient(160deg,#1f9e4c,#26890c)}
+.result.bad{background:linear-gradient(160deg,#c7173a,#8f0f29)}
+.result.neutral{background:transparent}
+.icon{width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.2);display:grid;place-items:center;font-size:70px;margin:18px auto;animation:bounce .6s cubic-bezier(.2,1.8,.4,1)}
+@keyframes bounce{from{transform:scale(0)}}
+.pts{display:inline-block;background:rgba(0,0,0,.3);padding:10px 22px;border-radius:12px;font-size:30px;font-weight:900;margin:8px 0}
+.streak{display:inline-block;background:#ff6a00;padding:6px 14px;border-radius:999px;font-weight:900;animation:bounce .5s}
+.rankline{font-size:20px;font-weight:800;margin-top:14px}
+.explain{background:#fff;color:#1d1d2b;border-radius:12px;padding:12px 14px;margin-top:16px;text-align:left;font-size:16px}
+.spinner{width:64px;height:64px;border:8px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:spin 1s linear infinite;margin:20px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.place{font-size:clamp(56px,18vw,96px);font-weight:900;line-height:1;margin:10px 0}
+.footer{position:fixed;bottom:0;left:0;right:0;background:#fff;color:#1d1d2b;display:flex;justify-content:space-between;padding:10px 16px;font-weight:800;z-index:5}
+</style>
+</head>
+<body>
+<div class="bgshapes" id="bg"></div>
+
+<section class="screen center on" id="sPin">
+  <div class="logo" style="font-size:40px;margin-bottom:22px"><b>Ka</b>xoote</div>
+  <form class="card joinbox" id="pinForm">
+    <input class="big" id="pinIn" inputmode="numeric" autocomplete="off" placeholder="PIN игры" maxlength="7">
+    <button class="btn dark" type="submit">Войти</button>
+    <div class="err" id="pinErr"></div>
+  </form>
+</section>
+
+<section class="screen center" id="sName">
+  <form class="card joinbox" id="nameForm">
+    <div style="font-weight:800">Выбери аватар</div>
+    <div class="avatars" id="avatars"></div>
+    <input class="big" id="nameIn" autocomplete="off" placeholder="Твоё имя" maxlength="18">
+    <button class="btn dark" type="submit">Готово, поехали!</button>
+    <div class="err" id="nameErr"></div>
+  </form>
+</section>
+
+<section class="screen center" id="sWait">
+  <p class="big">Ты в игре!</p>
+  <p style="font-size:18px;opacity:.9">Найди своё имя на экране</p>
+  <div class="spinner"></div>
+  <p id="waitTitle" style="font-weight:800"></p>
+</section>
+
+<section class="screen center" id="sIntro">
+  <div class="pill" id="iNum"></div>
+  <p class="big" style="margin-top:16px">Приготовься!</p>
+  <p id="iType" style="font-weight:800;opacity:.9"></p>
+  <div class="spinner"></div>
+</section>
+
+<section class="screen" id="sAns">
+  <div class="hdr"><span class="pill" id="aNum"></span><span class="pill" id="aTime"></span></div>
+  <div class="qtext" id="aText"></div>
+  <div id="aBody" style="flex:1;display:flex;flex-direction:column"></div>
+</section>
+
+<section class="screen center" id="sSent">
+  <p class="big">Ответ принят!</p>
+  <div class="spinner"></div>
+  <p style="font-weight:800" id="sentLine">Ждём остальных…</p>
+</section>
+
+<section class="screen center" id="sRes"><div class="result" id="resBox"></div></section>
+
+<section class="screen center" id="sEnd">
+  <p class="big">Игра окончена</p>
+  <div class="place" id="endPlace"></div>
+  <p id="endLine" style="font-size:22px;font-weight:800"></p>
+  <a href="play.html" class="btn" style="text-decoration:none;margin-top:20px">Новая игра</a>
+</section>
+
+<div class="footer" id="footer" style="display:none"><span id="fName"></span><span id="fScore">0</span></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="fx.js"></script>
+<script src="play.js"></script>
+</body>
+</html>
