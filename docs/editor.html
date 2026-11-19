@@ -46,6 +46,31 @@ textarea.inp{min-height:70px;resize:vertical}
 .typepick{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .typepick button{background:#f1f0f6;padding:12px;font-weight:800;text-align:left;border-radius:10px;border:2px solid transparent}
 .typepick button:hover{border-color:#46178f}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn .ic{margin:0}
+.ticon{width:28px;height:28px;border-radius:8px;display:inline-grid;place-items:center;color:#fff;flex:none}
+.ticon .ic{width:18px;height:18px;margin:0}
+.ticon.big{width:52px;height:52px;border-radius:14px}
+.ticon.big .ic{width:30px;height:30px}
+.qi{flex-direction:column;align-items:stretch;gap:6px;padding:8px 8px 10px}
+.qi .hd{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;color:#6b6b80}
+.qi .hd .num{width:auto;color:#46178f}
+.qi .hd .ic{width:14px;height:14px}
+.thumb{border-radius:8px;background:#ece9f6;padding:6px;display:grid;gap:4px}
+.thumb .tt{background:#fff;border-radius:4px;font-size:10px;font-weight:800;padding:3px 5px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#1d1d2b}
+.thumb .ti{height:34px;border-radius:4px;background:#dcd7ee center/cover;display:grid;place-items:center;color:#8f86b5}
+.thumb .ti .ic{width:18px;height:18px}
+.thumb .ta{display:grid;grid-template-columns:1fr 1fr;gap:3px}
+.thumb .ta i{height:9px;border-radius:3px;position:relative}
+.thumb .ta i.ok::after{content:'';position:absolute;right:2px;top:2px;width:5px;height:5px;border-radius:50%;background:#fff}
+.thumb .tl{display:grid;gap:3px}
+.thumb .tl i{height:6px;border-radius:3px;background:#c9c2e3}
+.qi .tx{font-size:12px}
+label.f .lab{display:flex;align-items:center;gap:6px}
+label.f .lab .ic{color:#864cbf}
+.imgbox .bigimg{width:64px;height:64px;color:#b5acd6}
+.typepick button{display:flex;gap:12px;align-items:center}
+.typepick button b{display:block}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1d1d2b;color:#fff;padding:12px 20px;border-radius:10px;font-weight:800;z-index:99;display:none}
 .home{max-width:1100px;margin:0 auto;padding:20px}
 .qgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;margin-top:16px}
@@ -63,8 +88,8 @@ textarea.inp{min-height:70px;resize:vertical}
 
 <div id="homeView">
   <header><a href="./" class="logo" style="text-decoration:none"><b>Ka</b>xoote</a><span style="flex:1;font-weight:800">Мои викторины</span>
-    <label class="btn lite sm" style="cursor:pointer">Импорт .json<input type="file" accept=".json" id="importFile" hidden></label>
-    <button class="btn purple sm" id="newQuiz">+ Новая викторина</button></header>
+    <label class="btn lite sm" style="cursor:pointer"><span data-ic="upload"></span>Импорт .json<input type="file" accept=".json" id="importFile" hidden></label>
+    <button class="btn purple sm" id="newQuiz"><span data-ic="plus"></span>Новая викторина</button></header>
   <div class="home"><p class="hint" style="font-size:15px">Викторины сохраняются в этом браузере. Чтобы викторина была на сайте у всех — нажми «Экспорт», положи файл в папку <b>docs/quizzes</b> и добавь его имя в <b>docs/quizzes/index.json</b>.</p><div class="qgrid" id="qgrid"></div></div>
 </div>
 
@@ -72,13 +97,13 @@ textarea.inp{min-height:70px;resize:vertical}
   <header>
     <a href="#" class="logo" id="back" style="text-decoration:none"><b>Ka</b>xoote</a>
     <input id="title" placeholder="Название викторины">
-    <button class="btn lite sm" id="settingsBtn">Описание и обложка</button>
-    <button class="btn lite sm" id="exportBtn">Экспорт</button>
-    <a class="btn lite sm" href="host.html" style="text-decoration:none">Играть</a>
-    <button class="btn purple sm" id="saveBtn">Сохранить</button>
+    <button class="btn lite sm" id="settingsBtn"><span data-ic="gear"></span>Описание и обложка</button>
+    <button class="btn lite sm" id="exportBtn"><span data-ic="download"></span>Экспорт</button>
+    <a class="btn lite sm" href="host.html" style="text-decoration:none"><span data-ic="play"></span>Играть</a>
+    <button class="btn purple sm" id="saveBtn"><span data-ic="save"></span>Сохранить</button>
   </header>
   <div class="layout">
-    <aside class="side"><div id="qlist" style="display:grid;gap:8px"></div><button class="btn purple sm" id="addQ">+ Добавить вопрос</button></aside>
+    <aside class="side"><div id="qlist" style="display:grid;gap:8px"></div><button class="btn purple sm" id="addQ"><span data-ic="plus"></span>Добавить вопрос</button></aside>
     <section class="panel" id="qedit"></section>
     <aside class="panel" id="qside"></aside>
   </div>
@@ -89,12 +114,12 @@ textarea.inp{min-height:70px;resize:vertical}
   <h3 style="margin:0">Описание и обложка</h3>
   <label class="f">Описание<textarea class="inp" id="desc"></textarea></label>
   <label class="f">Обложка (ссылка на картинку)<input class="inp" id="cover" placeholder="https://… или загрузи файл"></label>
-  <label class="btn lite sm" style="cursor:pointer;justify-self:start">Загрузить файл<input type="file" accept="image/*" id="coverFile" hidden></label>
+  <label class="btn lite sm" style="cursor:pointer;justify-self:start"><span data-ic="upload"></span>Загрузить файл<input type="file" accept="image/*" id="coverFile" hidden></label>
   <div style="text-align:right"><button class="btn purple sm" onclick="this.closest('.dlg').classList.remove('on')">Готово</button></div>
 </div></div>
 <div class="toast" id="toast"></div>
 
-<script src="fx.js?v=4"></script>
+<script src="fx.js?v=5"></script>
 <script src="store.js?v=4"></script>
 <script>
 {
@@ -122,8 +147,8 @@ textarea.inp{min-height:70px;resize:vertical}
   async function loadHome() {
     $('#homeView').style.display = ''; $('#editView').style.display = 'none';
     const list = await Store.list();
-    $('#qgrid').innerHTML = list.map((q) => `<div class="qg"><h3>${esc(q.title)}</h3><p>${q.count} вопросов</p><p>${esc(q.description)}</p>
-      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn purple sm" data-e="${esc(q.id)}">Изменить</button><button class="btn lite sm" data-c="${esc(q.id)}">Копия</button><button class="btn red sm" data-d="${esc(q.id)}">Удалить</button></div></div>`).join('') || '<p>Пока пусто — создай первую викторину.</p>';
+    $('#qgrid').innerHTML = list.map((q) => `<div class="qg"><h3>${esc(q.title)}</h3><p class="ib" style="justify-content:flex-start">${ic('list')}${q.count} вопросов</p><p>${esc(q.description)}</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn purple sm" data-e="${esc(q.id)}">${ic('edit')}Изменить</button><button class="btn lite sm" data-c="${esc(q.id)}">${ic('copy')}Копия</button><button class="btn red sm" data-d="${esc(q.id)}" aria-label="Удалить">${ic('trash')}</button></div></div>`).join('') || '<p>Пока пусто — создай первую викторину.</p>';
     $('#qgrid').querySelectorAll('[data-e]').forEach((b) => b.onclick = () => openQuiz(b.dataset.e));
     $('#qgrid').querySelectorAll('[data-c]').forEach((b) => b.onclick = async () => { const q = await Store.get(b.dataset.c); delete q.id; q.title += ' (копия)'; await Store.save(q); loadHome(); });
     $('#qgrid').querySelectorAll('[data-d]').forEach((b) => b.onclick = () => confirmDlg('Удалить эту викторину навсегда?', async () => { await Store.del(b.dataset.d); loadHome(); }));
@@ -188,12 +213,22 @@ textarea.inp{min-height:70px;resize:vertical}
   }
 
   function renderList() {
-    $('#qlist').innerHTML = quiz.questions.map((q, i) => `<button class="qi ${i === cur ? 'on' : ''}" data-i="${i}"><span class="num">${i + 1}</span><span class="tx"><span class="tp">${TYPE_NAMES[q.type]}</span>${esc(q.text || '(без текста)')}</span></button>`).join('');
+    $('#qlist').innerHTML = quiz.questions.map((q, i) => `<button class="qi ${i === cur ? 'on' : ''}" data-i="${i}">
+      <span class="hd"><span class="num">${i + 1}</span><span class="ticon" style="background:${TYPE_COLORS[q.type]};width:20px;height:20px;border-radius:6px">${ic(TYPE_ICONS[q.type])}</span>${TYPE_NAMES[q.type]}${q.type !== 'slide' ? `<span style="margin-left:auto" class="ib">${ic('clock')}${q.time}</span>` : ''}</span>
+      <span class="thumb"><span class="tt">${esc(q.text || 'Вопрос')}</span><span class="ti" style="${q.image ? `background-image:url('${esc(q.image)}')` : ''}">${q.image ? '' : ic('image')}</span>${thumbAnswers(q)}</span></button>`).join('');
     $('#qlist').querySelectorAll('.qi').forEach((b) => b.onclick = () => { cur = +b.dataset.i; renderList(); renderQ(); });
   }
 
+  function thumbAnswers(q) {
+    if (q.type === 'quiz' || q.type === 'poll') return `<span class="ta">${q.options.map((o, i) => `<i class="a${i} ${q.type === 'quiz' && q.correct.includes(i) ? 'ok' : ''}"></i>`).join('')}</span>`;
+    if (q.type === 'truefalse') return `<span class="ta"><i class="a1 ${q.correct[0] === 0 ? 'ok' : ''}"></i><i class="a0 ${q.correct[0] === 1 ? 'ok' : ''}"></i></span>`;
+    if (q.type === 'order') return `<span class="tl">${q.items.map(() => '<i></i>').join('')}</span>`;
+    if (q.type === 'type') return '<span class="tl"><i style="background:#fff;height:9px"></i></span>';
+    if (q.type === 'slider') return '<span class="tl"><i style="background:linear-gradient(90deg,#ffc21a 55%,#c9c2e3 55%)"></i></span>';
+    return '<span class="tl"><i></i><i style="width:70%"></i></span>';
+  }
   $('#addQ').onclick = () => $('#typeDlg').classList.add('on');
-  $('#typePick').innerHTML = Object.keys(TYPE_NAMES).map((t) => `<button data-t="${t}">${TYPE_NAMES[t]}<br><span class="hint">${TYPE_DESC[t]}</span></button>`).join('');
+  $('#typePick').innerHTML = Object.keys(TYPE_NAMES).map((t) => `<button data-t="${t}"><span class="ticon big" style="background:${TYPE_COLORS[t]}">${ic(TYPE_ICONS[t])}</span><span><b>${TYPE_NAMES[t]}</b><span class="hint">${TYPE_DESC[t]}</span></span></button>`).join('');
   $('#typePick').querySelectorAll('button').forEach((b) => b.onclick = () => {
     quiz.questions.splice(cur + 1, 0, blank(b.dataset.t)); cur = Math.min(cur + 1, quiz.questions.length - 1);
     if (quiz.questions.length === 1) cur = 0;
@@ -212,20 +247,20 @@ textarea.inp{min-height:70px;resize:vertical}
     const set = (k, v, redraw) => { q[k] = v; dirty = true; if (redraw) renderQ(); if (k === 'text') renderList(); };
 
     let html = `<input class="inp qtext" id="qt" placeholder="${q.type === 'slide' ? 'Заголовок слайда' : 'Напиши вопрос'}" value="${esc(q.text)}" maxlength="160">
-      <div class="imgbox" id="ib">${q.image ? `<img src="${esc(q.image)}" alt=""><button class="btn lite sm" id="rmImg">Убрать картинку</button>` : `<div style="font-weight:800">Перетащи картинку сюда</div><div class="hint">или</div>`}
-        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center"><label class="btn lite sm" style="cursor:pointer">Загрузить файл<input type="file" accept="image/*" id="imgFile" hidden></label><button class="btn lite sm" id="imgUrl">Вставить ссылку</button></div></div>`;
+      <div class="imgbox" id="ib">${q.image ? `<img src="${esc(q.image)}" alt=""><button class="btn lite sm" id="rmImg">${ic('trash')}Убрать картинку</button>` : `${ic('image', 'bigimg')}<div style="font-weight:800">Перетащи картинку сюда</div><div class="hint">или</div>`}
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center"><label class="btn lite sm" style="cursor:pointer">${ic('upload')}Загрузить файл<input type="file" accept="image/*" id="imgFile" hidden></label><button class="btn lite sm" id="imgUrl">${ic('link')}Вставить ссылку</button></div></div>`;
 
     if (q.type === 'quiz' || q.type === 'poll') {
       html += `<div class="opts">${q.options.map((o, i) => `<div class="oe a${i}"><span class="shape">${SHAPES[i]}</span><input type="text" data-o="${i}" value="${esc(o)}" placeholder="Ответ ${i + 1}" maxlength="80">
         ${q.type === 'quiz' ? `<button class="ck ${q.correct.includes(i) ? 'on' : ''}" data-c="${i}" title="Правильный">${q.correct.includes(i) ? '✔' : ''}</button>` : ''}
         ${q.options.length > 2 ? `<button class="x" data-x="${i}" title="Удалить">✕</button>` : ''}</div>`).join('')}</div>
-        ${q.options.length < 6 ? '<button class="btn lite sm" id="addOpt" style="justify-self:start">+ ещё ответ</button>' : ''}`;
+        ${q.options.length < 6 ? `<button class="btn lite sm" id="addOpt" style="justify-self:start">${ic('plus')}Ещё ответ</button>` : ''}`;
     } else if (q.type === 'truefalse') {
       html += `<div class="opts">${q.labels.map((o, i) => `<div class="oe a${i === 0 ? 1 : 0}"><span class="shape">${SHAPES[i === 0 ? 1 : 0]}</span><input type="text" data-l="${i}" value="${esc(o)}" maxlength="30"><button class="ck ${q.correct[0] === i ? 'on' : ''}" data-tf="${i}">${q.correct[0] === i ? '✔' : ''}</button></div>`).join('')}</div>
         <div class="hint">Подписи кнопок можно поменять (например «Да / Нет»). Отметь правильный вариант.</div>`;
     } else if (q.type === 'type') {
-      html += `<div class="list">${q.accept.map((a, i) => `<div class="li"><b>${i + 1}</b><input class="inp" data-a="${i}" value="${esc(a)}" placeholder="${i ? 'Другой вариант написания' : 'Правильный ответ'}" maxlength="40">${q.accept.length > 1 ? `<button class="btn lite sm" data-ax="${i}">✕</button>` : ''}</div>`).join('')}</div>
-        <button class="btn lite sm" id="addAcc" style="justify-self:start">+ вариант написания</button>
+      html += `<div class="list">${q.accept.map((a, i) => `<div class="li"><b>${i + 1}</b><input class="inp" data-a="${i}" value="${esc(a)}" placeholder="${i ? 'Другой вариант написания' : 'Правильный ответ'}" maxlength="40">${q.accept.length > 1 ? `<button class="btn lite sm" data-ax="${i}" aria-label="Удалить">${ic('cross')}</button>` : ''}</div>`).join('')}</div>
+        <button class="btn lite sm" id="addAcc" style="justify-self:start">${ic('plus')}Вариант написания</button>
         <div class="hint">Регистр, «ё/е» и знаки препинания не важны.</div>`;
     } else if (q.type === 'slider') {
       html += `<div class="row">
@@ -237,23 +272,23 @@ textarea.inp{min-height:70px;resize:vertical}
         <label class="f">Единица<input class="inp" data-s="unit" value="${esc(q.unit)}" placeholder="лет, км…"></label></div>
         <div class="hint">Чем ближе ответ к правильному (в пределах допуска), тем больше очков.</div>`;
     } else if (q.type === 'order') {
-      html += `<div class="hint">Пиши пункты в ПРАВИЛЬНОМ порядке — игрокам они перемешаются.</div><div class="list">${q.items.map((a, i) => `<div class="li"><b>${i + 1}</b><input class="inp" data-it="${i}" value="${esc(a)}" maxlength="60" placeholder="Пункт ${i + 1}">${q.items.length > 2 ? `<button class="btn lite sm" data-itx="${i}">✕</button>` : ''}</div>`).join('')}</div>
-        ${q.items.length < 6 ? '<button class="btn lite sm" id="addIt" style="justify-self:start">+ пункт</button>' : ''}`;
+      html += `<div class="hint">Пиши пункты в ПРАВИЛЬНОМ порядке — игрокам они перемешаются.</div><div class="list">${q.items.map((a, i) => `<div class="li"><b>${i + 1}</b><input class="inp" data-it="${i}" value="${esc(a)}" maxlength="60" placeholder="Пункт ${i + 1}">${q.items.length > 2 ? `<button class="btn lite sm" data-itx="${i}" aria-label="Удалить">${ic('cross')}</button>` : ''}</div>`).join('')}</div>
+        ${q.items.length < 6 ? `<button class="btn lite sm" id="addIt" style="justify-self:start">${ic('plus')}Пункт</button>` : ''}`;
     } else if (q.type === 'slide') {
-      html += `<label class="f">Текст слайда<textarea class="inp" id="body" style="min-height:160px">${esc(q.body)}</textarea></label>`;
+      html += `<label class="f"><span class="lab">${ic('text')}Текст слайда</span><textarea class="inp" id="body" style="min-height:160px">${esc(q.body)}</textarea></label>`;
     }
     ed.innerHTML = html;
 
     // боковая панель
     side.innerHTML = `
-      <label class="f">Тип вопроса<select class="inp" id="tsel">${Object.keys(TYPE_NAMES).map((t) => `<option value="${t}" ${t === q.type ? 'selected' : ''}>${TYPE_NAMES[t]}</option>`).join('')}</select></label>
-      ${q.type !== 'slide' ? `<label class="f">Время<select class="inp" id="time">${TIMES.map((t) => `<option ${t === q.time ? 'selected' : ''} value="${t}">${t} сек</option>`).join('')}</select></label>` : ''}
-      ${!['poll', 'slide'].includes(q.type) ? `<label class="f">Очки<select class="inp" id="pts"><option value="standard">Обычные</option><option value="double">Двойные ×2</option><option value="none">Без очков</option></select></label>` : ''}
-      ${q.type === 'quiz' ? `<label class="f" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="multi" ${q.multi ? 'checked' : ''} style="width:22px;height:22px"> Несколько правильных (игрок выбирает все)</label>` : ''}
-      ${q.type !== 'slide' ? `<label class="f">Пояснение после ответа<textarea class="inp" id="explain" placeholder="Интересный факт или ссылка на стих">${esc(q.explain)}</textarea></label>` : ''}
+      <label class="f"><span class="lab">${ic(TYPE_ICONS[q.type])}Тип вопроса</span><select class="inp" id="tsel">${Object.keys(TYPE_NAMES).map((t) => `<option value="${t}" ${t === q.type ? 'selected' : ''}>${TYPE_NAMES[t]}</option>`).join('')}</select></label>
+      ${q.type !== 'slide' ? `<label class="f"><span class="lab">${ic('clock')}Время</span><select class="inp" id="time">${TIMES.map((t) => `<option ${t === q.time ? 'selected' : ''} value="${t}">${t} сек</option>`).join('')}</select></label>` : ''}
+      ${!['poll', 'slide'].includes(q.type) ? `<label class="f"><span class="lab">${ic('star')}Очки</span><select class="inp" id="pts"><option value="standard">Обычные</option><option value="double">Двойные ×2</option><option value="none">Без очков</option></select></label>` : ''}
+      ${q.type === 'quiz' ? `<label class="f" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="multi" ${q.multi ? 'checked' : ''} style="width:22px;height:22px">${ic('checkc')} Несколько правильных (игрок выбирает все)</label>` : ''}
+      ${q.type !== 'slide' ? `<label class="f"><span class="lab">${ic('info')}Пояснение после ответа</span><textarea class="inp" id="explain" placeholder="Интересный факт или ссылка на стих">${esc(q.explain)}</textarea></label>` : ''}
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn lite sm" id="up">▲</button><button class="btn lite sm" id="down">▼</button>
-        <button class="btn lite sm" id="dup">Копия</button><button class="btn red sm" id="del">Удалить</button></div>`;
+        <button class="btn lite sm" id="up" aria-label="Выше">${ic('up')}</button><button class="btn lite sm" id="down" aria-label="Ниже">${ic('down')}</button>
+        <button class="btn lite sm" id="dup">${ic('copy')}Копия</button><button class="btn red sm" id="del">${ic('trash')}Удалить</button></div>`;
     if ($('#pts')) $('#pts').value = q.points;
 
     // события
@@ -311,6 +346,7 @@ textarea.inp{min-height:70px;resize:vertical}
     $('#del').onclick = () => { if (quiz.questions.length === 1) return toast('Нужен хотя бы один вопрос'); quiz.questions.splice(cur, 1); cur = Math.max(0, cur - 1); dirty = true; renderList(); renderQ(); };
   }
 
+  applyIcons();
   loadHome();
 }
 </script>

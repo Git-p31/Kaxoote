@@ -141,6 +141,7 @@ const SHAPES = [
   '<svg viewBox="0 0 32 32"><path d="M16 4c7 0 12 5 12 12s-5 12-12 12S4 23 4 16 9 4 16 4zm0 6a6 6 0 100 12 6 6 0 000-12z"/></svg>',
 ];
 const TYPE_NAMES = { quiz: 'Викторина', truefalse: 'Правда или миф', type: 'Введи ответ', slider: 'Угадай число', order: 'Расставь по порядку', poll: 'Опрос', slide: 'Слайд' };
+const TYPE_COLORS = { quiz: '#864cbf', truefalse: '#1368ce', type: '#26890c', slider: '#0aa3a3', order: '#d89e00', poll: '#e21b3c', slide: '#46178f' };
 const TYPE_ICONS = { quiz: 'grid', truefalse: 'checkc', type: 'keyboard', slider: 'sliders', order: 'listol', poll: 'poll', slide: 'slide' };
 const REACTIONS = ['👍', '❤️', '😂', '😮', '🔥', '🙏', '👏', '🎉'];
 
@@ -182,6 +183,17 @@ const ICON_PATHS = {
   info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/>',
   medal: '<path d="M8 3l4 6 4-6"/><circle cx="12" cy="15" r="5.5"/><path d="M12 12.5v5"/>',
   send: '<path d="M4 12l16-8-6 16-2.5-6.5z"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  image: '<rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="8.5" cy="9.5" r="1.8" fill="currentColor"/><path d="M21 16l-5-5-9 9"/>',
+  upload: '<path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/>',
+  download: '<path d="M12 4v12M7 11l5 5 5-5M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/>',
+  trash: '<path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13M10 11v6M14 11v6"/>',
+  copy: '<rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V5.5A1.5 1.5 0 0014.5 4h-9A1.5 1.5 0 004 5.5v9A1.5 1.5 0 005.5 16H8"/>',
+  save: '<path d="M5 4h11l3 3v12a1 1 0 01-1 1H6a1 1 0 01-1-1z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/>',
+  down: '<path d="M12 5v14M6 13l6 6 6-6"/>',
+  link2: '<path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1"/>',
+  text: '<path d="M5 6h14M12 6v13M9 19h6"/>',
 };
 const ic = (n, cls = '') => `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICON_PATHS[n] || ''}</svg>`;
 (function iconStyle() {
@@ -197,73 +209,70 @@ function applyIcons(root = document) {
   });
 }
 
-// ---------- Объёмные аватары (SVG с градиентами, бликами и тенью) ----------
-const AV_DEFS = [
-  { h: 28, ears: 'cat', eyes: 'big', mouth: 'smile', acc: '' },
-  { h: 205, ears: 'bear', eyes: 'round', mouth: 'open', acc: 'glasses' },
-  { h: 330, ears: 'bunny', eyes: 'happy', mouth: 'smile', acc: 'bow' },
-  { h: 120, ears: 'antenna', eyes: 'one', mouth: 'open', acc: '' },
-  { h: 48, ears: 'none', eyes: 'big', mouth: 'tongue', acc: 'crown' },
-  { h: 265, ears: 'horns', eyes: 'round', mouth: 'smile', acc: '' },
-  { h: 0, ears: 'bear', eyes: 'happy', mouth: 'open', acc: 'cap' },
-  { h: 175, ears: 'fins', eyes: 'big', mouth: 'smile', acc: '' },
-  { h: 15, ears: 'cat', eyes: 'round', mouth: 'tongue', acc: 'glasses' },
-  { h: 95, ears: 'leaf', eyes: 'happy', mouth: 'smile', acc: '' },
-  { h: 230, ears: 'antenna', eyes: 'big', mouth: 'smile', acc: 'bow' },
-  { h: 300, ears: 'cat', eyes: 'happy', mouth: 'open', acc: 'crown' },
-  { h: 190, ears: 'bunny', eyes: 'round', mouth: 'smile', acc: 'cap' },
-  { h: 60, ears: 'horns', eyes: 'one', mouth: 'tongue', acc: '' },
-  { h: 350, ears: 'none', eyes: 'round', mouth: 'smile', acc: 'glasses' },
-  { h: 140, ears: 'bear', eyes: 'big', mouth: 'open', acc: 'crown' },
+// ---------- Милые 2D-зверята (плоский стиль) ----------
+const INK = '#2b2340';
+const _e = (x, y, s = 1) => `<ellipse cx="${x}" cy="${y}" rx="${5 * s}" ry="${6 * s}" fill="${INK}"/><circle cx="${x + 1.8 * s}" cy="${y - 2.3 * s}" r="${1.9 * s}" fill="#fff"/><circle cx="${x - 1.6 * s}" cy="${y + 2 * s}" r="${0.8 * s}" fill="#fff" opacity=".8"/>`;
+const _eyes = (y = 54, dx = 12, s = 1) => _e(50 - dx, y, s) + _e(50 + dx, y, s);
+const _cheeks = (y = 63, dx = 21) => `<ellipse cx="${50 - dx}" cy="${y}" rx="6" ry="3.8" fill="#ff8fab" opacity=".6"/><ellipse cx="${50 + dx}" cy="${y}" rx="6" ry="3.8" fill="#ff8fab" opacity=".6"/>`;
+const _w = (y) => `<path d="M44 ${y}q3 3.2 6 0q3 3.2 6 0" stroke="${INK}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
+const _smile = (y, w = 6) => `<path d="M${50 - w} ${y}q${w} ${w * 0.8} ${w * 2} 0" stroke="${INK}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
+const _whisk = (y, c = INK) => `<path d="M30 ${y}h-12M30 ${y + 4}l-11 3M70 ${y}h12M70 ${y + 4}l11 3" stroke="${c}" stroke-width="1.6" stroke-linecap="round" opacity=".55"/>`;
+const _mirror = (d, fill) => `<path d="${d}" fill="${fill}"/><path d="${d}" fill="${fill}" transform="translate(100 0) scale(-1 1)"/>`;
+const ANIMALS = [
+  { n: 'Котик', bg: '#ffe3c2', svg: () => _mirror('M22 42 26 13 45 31Z', '#f59e42') + _mirror('M27 35 29 21 39 30Z', '#ffb4c2')
+    + `<ellipse cx="50" cy="57" rx="32" ry="28" fill="#f59e42"/><path d="M50 31v7M44 32l1.2 5.5M56 32l-1.2 5.5" stroke="#d9771a" stroke-width="3" stroke-linecap="round"/>`
+    + `<ellipse cx="50" cy="67" rx="12" ry="8" fill="#fff3e6"/>${_eyes(54)}${_cheeks(64)}<path d="M47 61.5h6l-3 3.2z" fill="#ff7a93"/>${_w(65)}${_whisk(63)}` },
+  { n: 'Щенок', bg: '#d7ecff', svg: () => `<ellipse cx="50" cy="56" rx="30" ry="28" fill="#e8b77c"/><ellipse cx="62" cy="52" rx="9" ry="10" fill="#c98f52"/>`
+    + `<ellipse cx="21" cy="52" rx="9" ry="19" fill="#8a5a32" transform="rotate(14 21 52)"/><ellipse cx="79" cy="52" rx="9" ry="19" fill="#8a5a32" transform="rotate(-14 79 52)"/>`
+    + `<ellipse cx="50" cy="68" rx="14" ry="10" fill="#fff1df"/>${_eyes(52)}${_cheeks(63, 20)}<ellipse cx="50" cy="62" rx="5" ry="3.8" fill="${INK}"/><circle cx="48.5" cy="61" r="1.2" fill="#fff"/>`
+    + `<path d="M47 71q3 8 6 0z" fill="#ff7a93"/><path d="M50 65.5v3M44 68.5q6 5 12 0" stroke="${INK}" stroke-width="2.3" fill="none" stroke-linecap="round"/>` },
+  { n: 'Мишка', bg: '#ffe9d6', svg: () => `<circle cx="26" cy="31" r="11" fill="#9c6b45"/><circle cx="74" cy="31" r="11" fill="#9c6b45"/><circle cx="26" cy="31" r="5.5" fill="#e8b88f"/><circle cx="74" cy="31" r="5.5" fill="#e8b88f"/>`
+    + `<ellipse cx="50" cy="57" rx="32" ry="29" fill="#9c6b45"/><ellipse cx="50" cy="67" rx="13" ry="10" fill="#e8c9a6"/>${_eyes(53)}${_cheeks(64, 22)}`
+    + `<ellipse cx="50" cy="62" rx="4.8" ry="3.6" fill="${INK}"/><path d="M50 65v2.5M45.5 68q4.5 4 9 0" stroke="${INK}" stroke-width="2.3" fill="none" stroke-linecap="round"/>` },
+  { n: 'Зайка', bg: '#ffe0ef', svg: () => `<ellipse cx="38" cy="22" rx="7.5" ry="21" fill="#f6f3fa" transform="rotate(-8 38 22)"/><ellipse cx="62" cy="22" rx="7.5" ry="21" fill="#f6f3fa" transform="rotate(8 62 22)"/>`
+    + `<ellipse cx="38" cy="23" rx="3.6" ry="14" fill="#ffb4c8" transform="rotate(-8 38 23)"/><ellipse cx="62" cy="23" rx="3.6" ry="14" fill="#ffb4c8" transform="rotate(8 62 23)"/>`
+    + `<ellipse cx="50" cy="59" rx="30" ry="27" fill="#f6f3fa"/>${_eyes(55)}${_cheeks(65)}<ellipse cx="50" cy="63" rx="3.6" ry="2.6" fill="#ff8fab"/>`
+    + `<path d="M50 65.5v2.5M46 68q4 3 8 0" stroke="${INK}" stroke-width="2.2" fill="none" stroke-linecap="round"/><rect x="47.3" y="68.5" width="5.4" height="4.6" rx="1.2" fill="#fff" stroke="${INK}" stroke-width="1.2"/>` },
+  { n: 'Лисичка', bg: '#fff0d6', svg: () => _mirror('M20 44 24 12 45 31Z', '#f07b2a') + _mirror('M24 12 22.6 25 32.5 21Z', '#3b2b2b') + _mirror('M26 34 27.5 22 37 30Z', '#ffd9b8')
+    + `<path d="M17 46Q50 18 83 46Q79 75 50 85Q21 75 17 46Z" fill="#f07b2a"/><path d="M22 58Q37 60 50 72Q63 60 78 58Q71 79 50 85Q29 79 22 58Z" fill="#fff4ea"/>`
+    + `${_eyes(53)}${_cheeks(63, 23)}<ellipse cx="50" cy="72" rx="4.2" ry="3.2" fill="${INK}"/>${_smile(76, 3.5)}` },
+  { n: 'Панда', bg: '#dff5e1', svg: () => `<circle cx="25" cy="29" r="11" fill="${INK}"/><circle cx="75" cy="29" r="11" fill="${INK}"/><ellipse cx="50" cy="57" rx="32" ry="29" fill="#fff"/>`
+    + `<ellipse cx="37" cy="54" rx="9" ry="11.5" fill="${INK}" transform="rotate(-22 37 54)"/><ellipse cx="63" cy="54" rx="9" ry="11.5" fill="${INK}" transform="rotate(22 63 54)"/>`
+    + `<circle cx="38" cy="53" r="4.2" fill="#fff"/><circle cx="62" cy="53" r="4.2" fill="#fff"/><circle cx="38.6" cy="53.6" r="2.5" fill="${INK}"/><circle cx="62.6" cy="53.6" r="2.5" fill="${INK}"/><circle cx="39.4" cy="52.4" r=".9" fill="#fff"/><circle cx="63.4" cy="52.4" r=".9" fill="#fff"/>`
+    + `${_cheeks(66, 22)}<ellipse cx="50" cy="65" rx="4.2" ry="3" fill="${INK}"/><path d="M50 67.5v2M46 70q4 3 8 0" stroke="${INK}" stroke-width="2.2" fill="none" stroke-linecap="round"/>` },
+  { n: 'Лягушонок', bg: '#e2f7d0', svg: () => `<circle cx="33" cy="33" r="12.5" fill="#6cc24a"/><circle cx="67" cy="33" r="12.5" fill="#6cc24a"/><ellipse cx="50" cy="60" rx="35" ry="26" fill="#6cc24a"/>`
+    + `<circle cx="33" cy="33" r="8" fill="#fff"/><circle cx="67" cy="33" r="8" fill="#fff"/>${_e(33, 33.5, 0.85)}${_e(67, 33.5, 0.85)}`
+    + `<circle cx="46" cy="52" r="1.4" fill="#3a7a2a"/><circle cx="54" cy="52" r="1.4" fill="#3a7a2a"/>${_cheeks(62, 25)}<path d="M33 62q17 13 34 0" stroke="${INK}" stroke-width="2.8" fill="none" stroke-linecap="round"/><path d="M45 67.5q5 5 10 0z" fill="#ff7a93"/>` },
+  { n: 'Совёнок', bg: '#ece3ff', svg: () => _mirror('M24 36 21 13 39 27Z', '#8b6bd1') + `<ellipse cx="50" cy="57" rx="32" ry="30" fill="#8b6bd1"/>`
+    + `<circle cx="38" cy="50" r="12.5" fill="#f3ecff"/><circle cx="62" cy="50" r="12.5" fill="#f3ecff"/>${_e(38, 51, 1.1)}${_e(62, 51, 1.1)}<path d="M45.5 60h9L50 68z" fill="#ffb02e"/>`
+    + `${_cheeks(63, 23)}<path d="M40 75q3 3 6 0M54 75q3 3 6 0M47 80q3 3 6 0" stroke="#b9a3ec" stroke-width="2.2" fill="none" stroke-linecap="round"/>` },
+  { n: 'Пингвин', bg: '#d9f1ff', svg: () => `<path d="M50 22q-3-7 5-9-2 5 0 9z" fill="#2f3550"/><ellipse cx="50" cy="55" rx="32" ry="31" fill="#2f3550"/>`
+    + `<path d="M50 37C40 28 22 36 24 54 26 70 40 79 50 79S74 70 76 54C78 36 60 28 50 37Z" fill="#fff"/>${_eyes(53, 11)}${_cheeks(64, 19)}<ellipse cx="50" cy="63" rx="6.5" ry="4.2" fill="#ffa62b"/>` },
+  { n: 'Хрюша', bg: '#ffe3ea', svg: () => _mirror('M24 40 22 18 41 29Z', '#ff9bb3') + `<ellipse cx="50" cy="57" rx="32" ry="28" fill="#ffb8c9"/>${_eyes(50)}${_cheeks(59, 23)}`
+    + `<ellipse cx="50" cy="65" rx="11.5" ry="8.5" fill="#ff8fab"/><ellipse cx="46" cy="65" rx="2.1" ry="3.2" fill="#d9607e"/><ellipse cx="54" cy="65" rx="2.1" ry="3.2" fill="#d9607e"/>${_smile(76, 4)}` },
+  { n: 'Львёнок', bg: '#fff2c2', svg: () => Array.from({ length: 12 }, (_, k) => { const a = (k / 12) * Math.PI * 2; return `<circle cx="${(50 + Math.cos(a) * 33).toFixed(1)}" cy="${(55 + Math.sin(a) * 31).toFixed(1)}" r="11.5" fill="${k % 2 ? '#e08a2c' : '#d0761c'}"/>`; }).join('')
+    + `<circle cx="31" cy="35" r="7.5" fill="#ffcf5c"/><circle cx="69" cy="35" r="7.5" fill="#ffcf5c"/><circle cx="31" cy="35" r="3.6" fill="#e8a63d"/><circle cx="69" cy="35" r="3.6" fill="#e8a63d"/>`
+    + `<ellipse cx="50" cy="57" rx="27" ry="25" fill="#ffcf5c"/><ellipse cx="50" cy="67" rx="11" ry="8" fill="#fff0c9"/>${_eyes(53, 11)}${_cheeks(63, 18)}`
+    + `<path d="M46 61.5h8l-4 4z" fill="#8a4b2a"/><path d="M50 65.5v2M46 68.5q4 3 8 0" stroke="${INK}" stroke-width="2.2" fill="none" stroke-linecap="round"/>` },
+  { n: 'Коала', bg: '#e1ecf5', svg: () => `<circle cx="22" cy="38" r="16" fill="#9aa6b6"/><circle cx="78" cy="38" r="16" fill="#9aa6b6"/><circle cx="22" cy="38" r="9" fill="#f3d9e3"/><circle cx="78" cy="38" r="9" fill="#f3d9e3"/>`
+    + `<ellipse cx="50" cy="57" rx="30" ry="28" fill="#b3bdcb"/>${_eyes(52, 13)}${_cheeks(64, 23)}<ellipse cx="50" cy="62" rx="7" ry="9" fill="#3a3f52"/><ellipse cx="47.5" cy="58.5" rx="2" ry="2.6" fill="#fff" opacity=".5"/>${_smile(75, 3.5)}` },
+  { n: 'Мышонок', bg: '#fff0d9', svg: () => `<circle cx="25" cy="32" r="15" fill="#b9b4c7"/><circle cx="75" cy="32" r="15" fill="#b9b4c7"/><circle cx="25" cy="32" r="9" fill="#ffc2d1"/><circle cx="75" cy="32" r="9" fill="#ffc2d1"/>`
+    + `<ellipse cx="50" cy="59" rx="28" ry="26" fill="#cbc6d8"/>${_eyes(55, 11)}${_cheeks(65, 19)}<circle cx="50" cy="63.5" r="3.4" fill="#ff7a93"/>${_smile(68, 3)}${_whisk(63)}` },
+  { n: 'Цыплёнок', bg: '#e6f7ff', svg: () => `<ellipse cx="20" cy="63" rx="6" ry="10" fill="#fcc419" transform="rotate(20 20 63)"/><ellipse cx="80" cy="63" rx="6" ry="10" fill="#fcc419" transform="rotate(-20 80 63)"/>`
+    + `<path d="M47 26q-7-10 1-13-1 6 4 8 3-7 8-3-6 2-8 8z" fill="#fab005"/><circle cx="50" cy="57" r="32" fill="#ffd43b"/>${_eyes(54, 11)}${_cheeks(64, 20)}<path d="M45 60.5h10L50 67.5z" fill="#ff922b"/>` },
+  { n: 'Единорог', bg: '#f1e6ff', svg: () => `<circle cx="27" cy="40" r="10" fill="#ff8fd1"/><circle cx="22" cy="54" r="9" fill="#b197fc"/><circle cx="26" cy="68" r="7.5" fill="#74c0fc"/><circle cx="38" cy="29" r="8" fill="#b197fc"/>`
+    + _mirror('M30 36 33 21 43 31Z', '#fff') + `<ellipse cx="50" cy="58" rx="29" ry="27" fill="#fff"/><path d="M50 6 56.5 31h-13z" fill="#ffd43b"/><path d="M45.5 24l9.5-3M46.8 18l7-2.4M48 12l4.6-1.5" stroke="#f08c00" stroke-width="1.8" stroke-linecap="round"/>`
+    + `<circle cx="34" cy="33" r="7" fill="#ff8fd1"/>${_eyes(56, 11)}${_cheeks(66, 19)}${_smile(68, 4)}` },
+  { n: 'Енотик', bg: '#e9f0e0', svg: () => _mirror('M23 40 25 18 43 30Z', '#7d7f8f') + _mirror('M27 35 28.5 24 37.5 30Z', '#d6c8d9') + `<ellipse cx="50" cy="57" rx="32" ry="28" fill="#a3a5b4"/>`
+    + `<path d="M19 53Q29 42 45 50Q50 54 55 50Q71 42 81 53Q73 65 58 59Q50 57 42 59Q27 65 19 53Z" fill="#3b3d4e"/><ellipse cx="36" cy="44" rx="8" ry="2.8" fill="#fff"/><ellipse cx="64" cy="44" rx="8" ry="2.8" fill="#fff"/>`
+    + `<circle cx="37" cy="53" r="4.4" fill="#fff"/><circle cx="63" cy="53" r="4.4" fill="#fff"/><circle cx="37.6" cy="53.6" r="2.6" fill="${INK}"/><circle cx="63.6" cy="53.6" r="2.6" fill="${INK}"/>`
+    + `<ellipse cx="50" cy="67" rx="12" ry="8" fill="#f2f0f5"/>${_cheeks(66, 23)}<ellipse cx="50" cy="63" rx="3.8" ry="2.8" fill="${INK}"/>${_smile(68, 3)}` },
 ];
-const AVATAR_IDS = AV_DEFS.map((_, i) => 'a' + i);
-let _avSeq = 0;
+const AVATAR_IDS = ANIMALS.map((_, i) => 'a' + i);
 function avatarSVG(id) {
-  const i = /^a(\d+)$/.exec(String(id || ''));
-  if (!i || !AV_DEFS[+i[1]]) return `<span class="av-emoji">${esc(id || '🙂')}</span>`;
-  const d = AV_DEFS[+i[1]], h = d.h, u = 'av' + (++_avSeq) + '_';
-  const c1 = `hsl(${h},95%,76%)`, c2 = `hsl(${h},80%,55%)`, c3 = `hsl(${h},75%,33%)`;
-  const g = `<defs>
-    <radialGradient id="${u}b" cx="35%" cy="28%" r="80%"><stop offset="0" stop-color="${c1}"/><stop offset=".55" stop-color="${c2}"/><stop offset="1" stop-color="${c3}"/></radialGradient>
-    <radialGradient id="${u}e" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c3}"/></radialGradient>
-    <radialGradient id="${u}w" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#dcd8ea"/></radialGradient>
-    <radialGradient id="${u}s" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#000" stop-opacity=".35"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
-    <linearGradient id="${u}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe066"/><stop offset="1" stop-color="#e0a100"/></linearGradient></defs>`;
-  const E = `url(#${u}e)`;
-  const ears = {
-    cat: `<path d="M22 34 26 8 44 24Z" fill="${E}"/><path d="M78 34 74 8 56 24Z" fill="${E}"/><path d="M27 28 29 15 38 24Z" fill="#ffb3c7" opacity=".8"/><path d="M73 28 71 15 62 24Z" fill="#ffb3c7" opacity=".8"/>`,
-    bear: `<circle cx="24" cy="26" r="11" fill="${E}"/><circle cx="76" cy="26" r="11" fill="${E}"/><circle cx="24" cy="26" r="5.5" fill="#ffc9d6" opacity=".7"/><circle cx="76" cy="26" r="5.5" fill="#ffc9d6" opacity=".7"/>`,
-    bunny: `<ellipse cx="36" cy="14" rx="7" ry="18" fill="${E}" transform="rotate(-10 36 14)"/><ellipse cx="64" cy="14" rx="7" ry="18" fill="${E}" transform="rotate(10 64 14)"/><ellipse cx="36" cy="15" rx="3" ry="12" fill="#ffc9d6" transform="rotate(-10 36 15)"/><ellipse cx="64" cy="15" rx="3" ry="12" fill="#ffc9d6" transform="rotate(10 64 15)"/>`,
-    antenna: `<path d="M42 22 34 6M58 22 66 6" stroke="${c3}" stroke-width="3" stroke-linecap="round"/><circle cx="34" cy="6" r="5" fill="url(#${u}g)"/><circle cx="66" cy="6" r="5" fill="url(#${u}g)"/>`,
-    horns: `<path d="M28 28C20 16 24 6 30 4c-1 8 3 14 8 18Z" fill="url(#${u}g)"/><path d="M72 28C80 16 76 6 70 4c1 8-3 14-8 18Z" fill="url(#${u}g)"/>`,
-    fins: `<path d="M50 4C58 10 60 18 58 22H42C40 18 42 10 50 4Z" fill="${E}"/><path d="M14 52C4 46 4 36 8 32c4 6 10 8 14 10Z" fill="${E}"/><path d="M86 52c10-6 10-16 6-20-4 6-10 8-14 10Z" fill="${E}"/>`,
-    leaf: `<path d="M50 20C48 8 56 2 66 2c0 10-6 16-16 18Z" fill="hsl(110,70%,45%)"/><path d="M50 20 58 9" stroke="hsl(110,70%,30%)" stroke-width="1.6"/>`,
-    none: '',
-  }[d.ears] || '';
-  const eyeW = (x, r) => `<ellipse cx="${x}" cy="50" rx="${r}" ry="${r * 1.1}" fill="url(#${u}w)"/><circle cx="${x + 1.5}" cy="51.5" r="${r * 0.55}" fill="#1d1830"/><circle cx="${x + 3}" cy="48.5" r="${r * 0.22}" fill="#fff"/>`;
-  const eyes = {
-    big: eyeW(38, 8.5) + eyeW(62, 8.5),
-    round: eyeW(39, 6.5) + eyeW(61, 6.5),
-    happy: `<path d="M31 51q7-8 14 0M55 51q7-8 14 0" stroke="#1d1830" stroke-width="3.6" fill="none" stroke-linecap="round"/>`,
-    one: `<ellipse cx="50" cy="48" rx="12" ry="13" fill="url(#${u}w)"/><circle cx="52" cy="50" r="7" fill="#1d1830"/><circle cx="55" cy="46" r="2.6" fill="#fff"/>`,
-  }[d.eyes];
-  const mouth = {
-    smile: `<path d="M41 65q9 8 18 0" stroke="#1d1830" stroke-width="3.2" fill="none" stroke-linecap="round"/>`,
-    open: `<path d="M40 63q10 0 20 0q-2 11-10 11t-10-11z" fill="#3a1028"/><path d="M44 70q6-4 12 0q-3 4-6 4t-6-4z" fill="#ff6b8b"/>`,
-    tongue: `<path d="M41 64q9 6 18 0" stroke="#1d1830" stroke-width="3.2" fill="none" stroke-linecap="round"/><path d="M48 66h8v4a4 4 0 01-8 0z" fill="#ff6b8b"/>`,
-  }[d.mouth];
-  const acc = {
-    glasses: `<g fill="none" stroke="#1d1830" stroke-width="3"><circle cx="38" cy="50" r="11"/><circle cx="62" cy="50" r="11"/><path d="M49 49h2M27 47l-6-3M73 47l6-3"/></g><path d="M30 44a9 9 0 017-4" stroke="#fff" stroke-width="2" opacity=".7" fill="none"/>`,
-    bow: `<path d="M50 22 36 14v16Z M50 22 64 14v16Z" fill="hsl(${(h + 180) % 360},85%,60%)" stroke="hsl(${(h + 180) % 360},70%,35%)" stroke-width="1.5"/><circle cx="50" cy="22" r="4" fill="hsl(${(h + 180) % 360},70%,45%)"/>`,
-    crown: `<path d="M34 24 30 8 41 16 50 4 59 16 70 8 66 24Z" fill="url(#${u}g)" stroke="#b07a00" stroke-width="1.2"/><circle cx="50" cy="11" r="2.4" fill="#ff3b5c"/>`,
-    cap: `<path d="M20 34Q22 12 50 12T80 34Z" fill="hsl(${(h + 200) % 360},80%,50%)"/><path d="M50 30h36q-4 6-14 6H50Z" fill="hsl(${(h + 200) % 360},75%,38%)"/><circle cx="50" cy="13" r="3" fill="#fff"/>`,
-  }[d.acc] || '';
-  return `<svg class="av" viewBox="0 0 100 100" aria-hidden="true">${g}
-    <ellipse cx="50" cy="94" rx="30" ry="5" fill="url(#${u}s)"/>
-    ${ears}
-    <circle cx="50" cy="55" r="36" fill="url(#${u}b)"/>
-    <ellipse cx="50" cy="66" rx="22" ry="16" fill="#fff" opacity=".18"/>
-    <ellipse cx="36" cy="32" rx="12" ry="7" fill="#fff" opacity=".45" transform="rotate(-25 36 32)"/>
-    <circle cx="27" cy="62" r="5" fill="#ff7aa0" opacity=".45"/><circle cx="73" cy="62" r="5" fill="#ff7aa0" opacity=".45"/>
-    ${eyes}${mouth}${acc}</svg>`;
+  const m = /^a(\d+)$/.exec(String(id || ''));
+  const a = m && ANIMALS[+m[1]];
+  if (!a) return `<span class="av-emoji">${esc(id || '🙂')}</span>`;
+  return `<svg class="av" viewBox="0 0 100 100" role="img" aria-label="${a.n}"><circle cx="50" cy="50" r="49" fill="${a.bg}"/>${a.svg()}</svg>`;
 }
+const avatarName = (id) => { const m = /^a(\d+)$/.exec(String(id || '')); return (m && ANIMALS[+m[1]] && ANIMALS[+m[1]].n) || ''; };

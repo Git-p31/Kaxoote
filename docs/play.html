@@ -10,11 +10,11 @@
 body{overscroll-behavior:none}
 .screen{padding:16px;min-height:100dvh}
 .joinbox{width:min(380px,100%);display:grid;gap:12px}
-.av{width:100%;height:100%;display:block;filter:drop-shadow(0 3px 4px rgba(0,0,0,.25))}
+.av{width:100%;height:100%;display:block}
 .avw{display:inline-grid;place-items:center}
 .avatars{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.avatars button{background:#f1f0f6;padding:6px;border-radius:14px;border:3px solid transparent;aspect-ratio:1;transition:transform .15s}
-.avatars button.sel{border-color:#864cbf;background:#efe4ff;transform:scale(1.06)}
+.avatars button{background:transparent;padding:4px;border-radius:50%;border:3px solid transparent;aspect-ratio:1;transition:transform .15s}
+.avatars button.sel{border-color:#864cbf;background:#efe4ff;transform:scale(1.08)}
 .meav{width:110px;height:110px;margin:0 auto 6px;animation:bounce .6s cubic-bezier(.2,1.8,.4,1)}
 .err{color:#e21b3c;font-weight:800;min-height:1.4em}
 .hdr{display:flex;justify-content:space-between;align-items:center;gap:10px;font-weight:800;margin-bottom:12px}
@@ -133,7 +133,7 @@ body{overscroll-behavior:none}
 
 <script src="lib/mqtt.min.js"></script>
 <script src="net.js?v=4"></script>
-<script src="fx.js?v=4"></script>
-<script src="play.js?v=4"></script>
+<script src="fx.js?v=5"></script>
+<script src="play.js?v=5"></script>
 </body>
 </html>
