@@ -5,6 +5,11 @@ const PEER_OPTS = { debug: 1, config: { iceServers: [
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
   { urls: 'stun:global.stun.twilio.com:3478' },
+  // бесплатные ретрансляторы — помогают, если сеть не пускает прямое соединение
+  { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'turn:freestun.net:3478', username: 'free', credential: 'free' },
 ] } };
 if (window.KX_PEER) Object.assign(PEER_OPTS, window.KX_PEER); // свой сервер соединений (необязательно)
 
@@ -280,7 +285,7 @@ function PlayerSocket() {
     pin = p;
     connecting = ensurePeer().then(() => new Promise((res, rej) => {
       const c = peer.connect(PEER_PREFIX + p, { reliable: true });
-      const timer = setTimeout(() => { delete pending.__connect; rej(new Error('timeout')); }, 12000);
+      const timer = setTimeout(() => { delete pending.__connect; rej(new Error('timeout')); }, 20000);
       pending.__connect = (err) => { clearTimeout(timer); rej(err); };
       c.on('open', () => {
         clearTimeout(timer); delete pending.__connect; conn = c; connecting = null;
@@ -305,7 +310,9 @@ function PlayerSocket() {
         try { conn.send({ t: 'emit', ev, id, data }); } catch { cb && cb({ error: 'Связь потеряна' }); }
       };
       if (ev === 'player:join') {
-        connect(String(data.pin)).then(go).catch((e) => cb && cb({ error: e.message === 'nogame' || e.message === 'timeout' ? 'Игра с таким PIN не найдена' : 'Нет связи. Проверь интернет.' }));
+        connect(String(data.pin)).then(go).catch((e) => cb && cb({ error: e.message === 'nogame' ? 'Игра с таким PIN не найдена. Проверь PIN и что ведущий открыл игру на этом же сайте.'
+          : e.message === 'timeout' ? 'Игра найдена, но сеть не даёт подключиться. Попробуй другую Wi-Fi или мобильный интернет.'
+          : 'Нет связи с сервером соединений. Проверь интернет.' }));
       } else if (conn && conn.open) go();
       else connect(pin).then(go).catch(() => cb && cb({ error: 'Связь потеряна' }));
     },
