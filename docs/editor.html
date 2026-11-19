@@ -71,6 +71,20 @@ label.f .lab .ic{color:#864cbf}
 .imgbox .bigimg{width:64px;height:64px;color:#b5acd6}
 .typepick button{display:flex;gap:12px;align-items:center}
 .typepick button b{display:block}
+.dd{position:relative}
+.dd>button{width:100%;display:flex;align-items:center;gap:10px;padding:8px 12px;border:2px solid #e3e1ee;border-radius:10px;background:#fff;font-weight:800;font-size:16px;color:#1d1d2b;min-height:52px;text-align:left}
+.dd>button:focus-visible,.dd.open>button{border-color:#ffc21a;outline:none}
+.dd>button .chev{margin-left:auto;transition:transform .2s;color:#6b6b80}
+.dd.open>button .chev{transform:rotate(180deg)}
+.dd .menu{position:absolute;left:0;right:0;top:calc(100% + 6px);background:#fff;border-radius:14px;box-shadow:0 14px 40px rgba(30,10,60,.25);padding:6px;z-index:30;display:none;max-height:70vh;overflow:auto}
+.dd.open .menu{display:grid;gap:2px}
+.dd .menu button{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;background:transparent;text-align:left;font-weight:800;color:#1d1d2b;width:100%}
+.dd .menu button:hover,.dd .menu button:focus-visible{background:#f3efff;outline:none}
+.dd .menu button.cur{background:#efe4ff}
+.dd .menu .sub{display:block;font-weight:500;font-size:12px;color:#6b6b80}
+.dd .menu .pv{margin-left:auto;width:58px;flex:none}
+.dd .menu .pv .thumb{padding:4px;gap:3px}
+.dd .menu .pv .ta i{height:7px}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1d1d2b;color:#fff;padding:12px 20px;border-radius:10px;font-weight:800;z-index:99;display:none}
 .home{max-width:1100px;margin:0 auto;padding:20px}
 .qgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;margin-top:16px}
@@ -119,7 +133,7 @@ label.f .lab .ic{color:#864cbf}
 </div></div>
 <div class="toast" id="toast"></div>
 
-<script src="fx.js?v=5"></script>
+<script src="fx.js?v=6"></script>
 <script src="store.js?v=4"></script>
 <script>
 {
@@ -131,9 +145,9 @@ label.f .lab .ic{color:#864cbf}
   };
   const toast = (m) => { const t = $('#toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(t._h); t._h = setTimeout(() => t.style.display = 'none', 2200); };
 
-  function blank(type) {
+  function blank(type, sample) {
     const b = { type, text: '', image: '', time: 20, points: 'standard', explain: '' };
-    if (type === 'quiz') Object.assign(b, { options: ['', '', '', ''], correct: [0], multi: false });
+    if (type === 'quiz') Object.assign(b, { options: ['', '', '', ''], correct: [sample ? 1 : 0], multi: false });
     if (type === 'truefalse') Object.assign(b, { labels: ['Правда', 'Миф'], correct: [0] });
     if (type === 'type') Object.assign(b, { accept: [''], time: 30 });
     if (type === 'slider') Object.assign(b, { min: 0, max: 100, step: 1, answer: 50, tolerance: 0, unit: '', time: 30 });
@@ -219,6 +233,33 @@ label.f .lab .ic{color:#864cbf}
     $('#qlist').querySelectorAll('.qi').forEach((b) => b.onclick = () => { cur = +b.dataset.i; renderList(); renderQ(); });
   }
 
+  // свой выпадающий список с иконками (обычный <select> иконки не показывает)
+  function dropdown(id, items, value) {
+    const cur = items.find((x) => String(x.v) === String(value)) || items[0];
+    const face = (x) => `<span class="ticon" style="background:${x.color}">${ic(x.icon)}</span><span>${esc(x.label)}</span>`;
+    return `<div class="dd" id="${id}" data-v="${esc(cur.v)}"><button type="button" aria-haspopup="listbox">${face(cur)}${ic('chev', 'chev')}</button>
+      <div class="menu" role="listbox">${items.map((x) => `<button type="button" role="option" data-v="${esc(x.v)}" class="${x === cur ? 'cur' : ''}"><span class="ticon" style="background:${x.color}">${ic(x.icon)}</span><span>${esc(x.label)}${x.sub ? `<span class="sub">${esc(x.sub)}</span>` : ''}</span>${x.pv ? `<span class="pv">${x.pv}</span>` : ''}</button>`).join('')}</div></div>`;
+  }
+  function bindDropdowns(root) {
+    root.querySelectorAll('.dd').forEach((dd) => {
+      const btn = dd.querySelector(':scope>button');
+      btn.onclick = (e) => { e.stopPropagation(); const was = dd.classList.contains('open'); document.querySelectorAll('.dd.open').forEach((x) => x.classList.remove('open')); if (!was) { dd.classList.add('open'); (dd.querySelector('.menu .cur') || dd.querySelector('.menu button')).focus(); } };
+      dd.querySelectorAll('.menu button').forEach((o) => o.onclick = (e) => {
+        e.stopPropagation(); dd.classList.remove('open');
+        if (o.dataset.v === dd.dataset.v) return;
+        dd.dataset.v = o.dataset.v;
+        if (dd.onchange) dd.onchange({ target: { value: o.dataset.v } });
+      });
+      dd.onkeydown = (e) => {
+        if (e.key === 'Escape') { dd.classList.remove('open'); btn.focus(); }
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+          const opts = [...dd.querySelectorAll('.menu button')]; const i = opts.indexOf(document.activeElement);
+          if (i >= 0) { e.preventDefault(); opts[(i + (e.key === 'ArrowDown' ? 1 : opts.length - 1)) % opts.length].focus(); }
+        }
+      };
+    });
+  }
+  document.addEventListener('click', () => document.querySelectorAll('.dd.open').forEach((x) => x.classList.remove('open')));
   function thumbAnswers(q) {
     if (q.type === 'quiz' || q.type === 'poll') return `<span class="ta">${q.options.map((o, i) => `<i class="a${i} ${q.type === 'quiz' && q.correct.includes(i) ? 'ok' : ''}"></i>`).join('')}</span>`;
     if (q.type === 'truefalse') return `<span class="ta"><i class="a1 ${q.correct[0] === 0 ? 'ok' : ''}"></i><i class="a0 ${q.correct[0] === 1 ? 'ok' : ''}"></i></span>`;
@@ -281,15 +322,17 @@ label.f .lab .ic{color:#864cbf}
 
     // боковая панель
     side.innerHTML = `
-      <label class="f"><span class="lab">${ic(TYPE_ICONS[q.type])}Тип вопроса</span><select class="inp" id="tsel">${Object.keys(TYPE_NAMES).map((t) => `<option value="${t}" ${t === q.type ? 'selected' : ''}>${TYPE_NAMES[t]}</option>`).join('')}</select></label>
-      ${q.type !== 'slide' ? `<label class="f"><span class="lab">${ic('clock')}Время</span><select class="inp" id="time">${TIMES.map((t) => `<option ${t === q.time ? 'selected' : ''} value="${t}">${t} сек</option>`).join('')}</select></label>` : ''}
-      ${!['poll', 'slide'].includes(q.type) ? `<label class="f"><span class="lab">${ic('star')}Очки</span><select class="inp" id="pts"><option value="standard">Обычные</option><option value="double">Двойные ×2</option><option value="none">Без очков</option></select></label>` : ''}
+      <div class="f" style="display:grid;gap:6px;font-weight:800;font-size:14px"><span class="lab" style="display:flex;align-items:center;gap:6px">${ic('grid')}Тип вопроса</span>${dropdown('tsel', Object.keys(TYPE_NAMES).map((t) => ({ v: t, label: TYPE_NAMES[t], sub: TYPE_DESC[t], icon: TYPE_ICONS[t], color: TYPE_COLORS[t], pv: `<span class="thumb">${thumbAnswers(blank(t, true))}</span>` })), q.type)}</div>
+      ${q.type !== 'slide' ? `<div class="f" style="display:grid;gap:6px;font-weight:800;font-size:14px"><span class="lab" style="display:flex;align-items:center;gap:6px">${ic('clock')}Время</span>${dropdown('time', TIMES.map((t) => ({ v: t, label: t + ' сек', icon: 'clock', color: t <= 10 ? '#e21b3c' : t <= 30 ? '#864cbf' : '#1368ce' })), q.time)}</div>` : ''}
+      ${!['poll', 'slide'].includes(q.type) ? `<div class="f" style="display:grid;gap:6px;font-weight:800;font-size:14px"><span class="lab" style="display:flex;align-items:center;gap:6px">${ic('star')}Очки</span>${dropdown('pts', [
+        { v: 'standard', label: 'Обычные', sub: 'До 1000 за быстрый ответ', icon: 'star', color: '#864cbf' },
+        { v: 'double', label: 'Двойные ×2', sub: 'До 2000 — для сложных', icon: 'flame', color: '#ff6a00' },
+        { v: 'none', label: 'Без очков', sub: 'Просто для интереса', icon: 'cross', color: '#6b6b80' }], q.points)}</div>` : ''}
       ${q.type === 'quiz' ? `<label class="f" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="multi" ${q.multi ? 'checked' : ''} style="width:22px;height:22px">${ic('checkc')} Несколько правильных (игрок выбирает все)</label>` : ''}
       ${q.type !== 'slide' ? `<label class="f"><span class="lab">${ic('info')}Пояснение после ответа</span><textarea class="inp" id="explain" placeholder="Интересный факт или ссылка на стих">${esc(q.explain)}</textarea></label>` : ''}
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn lite sm" id="up" aria-label="Выше">${ic('up')}</button><button class="btn lite sm" id="down" aria-label="Ниже">${ic('down')}</button>
         <button class="btn lite sm" id="dup">${ic('copy')}Копия</button><button class="btn red sm" id="del">${ic('trash')}Удалить</button></div>`;
-    if ($('#pts')) $('#pts').value = q.points;
 
     // события
     $('#qt').oninput = (e) => set('text', e.target.value);
@@ -331,12 +374,13 @@ label.f .lab .ic{color:#864cbf}
     if ($('#addIt')) $('#addIt').onclick = () => { q.items.push(''); dirty = true; renderQ(); };
     if ($('#body')) $('#body').oninput = (e) => set('body', e.target.value);
 
+    bindDropdowns(side);
     $('#tsel').onchange = (e) => {
-      const nq = blank(e.target.value); nq.text = q.text; nq.image = q.image; nq.explain = q.explain;
+      const nq = blank(e.target.value); nq.text = q.text; nq.image = q.image; nq.explain = q.explain; nq.time = q.time;
       if (q.options && nq.options) nq.options = q.options.slice();
       quiz.questions[cur] = nq; dirty = true; renderList(); renderQ();
     };
-    if ($('#time')) $('#time').onchange = (e) => set('time', +e.target.value);
+    if ($('#time')) $('#time').onchange = (e) => { set('time', +e.target.value, true); renderList(); };
     if ($('#pts')) $('#pts').onchange = (e) => set('points', e.target.value);
     if ($('#multi')) $('#multi').onchange = (e) => { q.multi = e.target.checked; if (!q.multi) q.correct = [q.correct[0] || 0]; dirty = true; renderQ(); };
     if ($('#explain')) $('#explain').oninput = (e) => set('explain', e.target.value);
